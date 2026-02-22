@@ -7,6 +7,7 @@ const AdminLogin = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -23,6 +24,19 @@ const AdminLogin = () => {
     setLoading(false);
   };
 
+  const handleSignup = async () => {
+    if (!email || !password) { setError("Enter email and password first"); return; }
+    setLoading(true);
+    setError("");
+    const { error: authError } = await supabase.auth.signUp({ email, password });
+    if (authError) {
+      setError(authError.message);
+    } else {
+      setMessage("Account created! Now click Login.");
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
@@ -34,6 +48,7 @@ const AdminLogin = () => {
 
         <form onSubmit={handleLogin} className="bg-card rounded-2xl p-6 border border-border shadow-sm space-y-4">
           {error && <p className="text-destructive text-sm text-center bg-destructive/10 rounded-lg p-3">{error}</p>}
+          {message && <p className="text-success text-sm text-center bg-success/10 rounded-lg p-3">{message}</p>}
 
           <div>
             <label className="block text-sm font-bold text-foreground mb-1">Email</label>
@@ -63,6 +78,14 @@ const AdminLogin = () => {
             className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold active:scale-95 transition-transform disabled:opacity-50"
           >
             {loading ? "Logging in..." : "Login"}
+          </button>
+          <button
+            type="button"
+            onClick={handleSignup}
+            disabled={loading}
+            className="w-full py-3 rounded-xl bg-muted text-foreground font-bold active:scale-95 transition-transform disabled:opacity-50 text-sm"
+          >
+            First time? Create Admin Account
           </button>
         </form>
 
