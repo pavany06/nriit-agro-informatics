@@ -11,22 +11,27 @@ serve(async (req) => {
   try {
     const { lat, lon } = await req.json();
     const API_KEY = Deno.env.get("OPENWEATHERMAP_API_KEY");
-    if (!API_KEY) throw new Error("OPENWEATHERMAP_API_KEY not configured");
+    if (!API_KEY) throw new Error("API key not configured");
 
-    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=te&appid=${API_KEY}`;
+    const url = `https://api.agromonitoring.com/agro/1.0/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}`;
     const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`Weather API error: ${resp.status}`);
+    if (!resp.ok) {
+      const text = await resp.text();
+      console.error("Agromonitoring error:", resp.status, text);
+      throw new Error(`Agromonitoring API error: ${resp.status}`);
+    }
 
     const data = await resp.json();
 
+    // Agromonitoring returns temp in Kelvin
     const result = {
-      temp: Math.round(data.main.temp),
-      feels_like: Math.round(data.main.feels_like),
+      temp: Math.round(data.main.temp - 273.15),
+      feels_like: Math.round(data.main.feels_like - 273.15),
       humidity: data.main.humidity,
-      wind: Math.round(data.wind.speed * 3.6), // m/s to km/h
-      condition: data.weather[0].description,
-      icon: data.weather[0].icon,
-      city: data.name,
+      wind: Math.round((data.wind?.speed || 0) * 3.6), // m/s to km/h
+      condition: data.weather?.[0]?.description || "Clear",
+      icon: data.weather?.[0]?.icon || "01d",
+      city: `${lat.toFixed(2)}°N, ${lon.toFixed(2)}°E`,
     };
 
     return new Response(JSON.stringify(result), {
