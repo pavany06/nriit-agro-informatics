@@ -23,6 +23,21 @@ serve(async (req) => {
 
     const data = await resp.json();
 
+    // Reverse geocoding to get city/village name
+    let cityName = `${lat.toFixed(2)}°N, ${lon.toFixed(2)}°E`;
+    try {
+      const geoResp = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=te,en`, {
+        headers: { "User-Agent": "NRIITAgro/1.0" },
+      });
+      if (geoResp.ok) {
+        const geoData = await geoResp.json();
+        const addr = geoData.address;
+        cityName = addr?.village || addr?.town || addr?.city || addr?.county || geoData.display_name?.split(",")[0] || cityName;
+      }
+    } catch (geoErr) {
+      console.error("Geocoding error:", geoErr);
+    }
+
     // Agromonitoring returns temp in Kelvin
     const result = {
       temp: Math.round(data.main.temp - 273.15),
@@ -31,7 +46,7 @@ serve(async (req) => {
       wind: Math.round((data.wind?.speed || 0) * 3.6), // m/s to km/h
       condition: data.weather?.[0]?.description || "Clear",
       icon: data.weather?.[0]?.icon || "01d",
-      city: `${lat.toFixed(2)}°N, ${lon.toFixed(2)}°E`,
+      city: cityName,
     };
 
     return new Response(JSON.stringify(result), {
