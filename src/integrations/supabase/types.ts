@@ -14,7 +14,183 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      alerts: {
+        Row: {
+          active: boolean | null
+          alert_type: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          message_en: string
+          message_te: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          alert_type?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          message_en: string
+          message_te?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          alert_type?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          message_en?: string
+          message_te?: string | null
+        }
+        Relationships: []
+      }
+      farming_methods: {
+        Row: {
+          created_at: string
+          description_en: string | null
+          description_te: string | null
+          emoji: string | null
+          id: string
+          image_url: string | null
+          name_en: string
+          name_te: string | null
+          published: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description_en?: string | null
+          description_te?: string | null
+          emoji?: string | null
+          id?: string
+          image_url?: string | null
+          name_en: string
+          name_te?: string | null
+          published?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description_en?: string | null
+          description_te?: string | null
+          emoji?: string | null
+          id?: string
+          image_url?: string | null
+          name_en?: string
+          name_te?: string | null
+          published?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      news: {
+        Row: {
+          created_at: string
+          id: string
+          published: boolean | null
+          summary_en: string | null
+          summary_te: string | null
+          title_en: string
+          title_te: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          published?: boolean | null
+          summary_en?: string | null
+          summary_te?: string | null
+          title_en: string
+          title_te?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          published?: boolean | null
+          summary_en?: string | null
+          summary_te?: string | null
+          title_en?: string
+          title_te?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      schemes: {
+        Row: {
+          apply_link: string | null
+          benefit_en: string | null
+          benefit_te: string | null
+          created_at: string
+          eligibility_en: string | null
+          eligibility_te: string | null
+          id: string
+          name_en: string
+          name_te: string | null
+          published: boolean | null
+          scheme_type: string
+          updated_at: string
+        }
+        Insert: {
+          apply_link?: string | null
+          benefit_en?: string | null
+          benefit_te?: string | null
+          created_at?: string
+          eligibility_en?: string | null
+          eligibility_te?: string | null
+          id?: string
+          name_en: string
+          name_te?: string | null
+          published?: boolean | null
+          scheme_type?: string
+          updated_at?: string
+        }
+        Update: {
+          apply_link?: string | null
+          benefit_en?: string | null
+          benefit_te?: string | null
+          created_at?: string
+          eligibility_en?: string | null
+          eligibility_te?: string | null
+          id?: string
+          name_en?: string
+          name_te?: string | null
+          published?: boolean | null
+          scheme_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      videos: {
+        Row: {
+          created_at: string
+          emoji: string | null
+          id: string
+          published: boolean | null
+          title_en: string
+          title_te: string | null
+          youtube_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          published?: boolean | null
+          title_en: string
+          title_te?: string | null
+          youtube_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          published?: boolean | null
+          title_en?: string
+          title_te?: string | null
+          youtube_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

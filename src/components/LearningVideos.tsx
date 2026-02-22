@@ -1,50 +1,58 @@
 import { ArrowLeft } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LearningVideosProps {
   onBack: () => void;
 }
 
-const videos = [
-  { title: "డ్రోన్ వ్యవసాయం", titleEn: "Drone Farming", videoId: "dQw4w9WgXcQ", emoji: "🚁" },
-  { title: "సేంద్రియ వ్యవసాయం", titleEn: "Organic Farming", videoId: "dQw4w9WgXcQ", emoji: "🌿" },
-  { title: "నీటి నిర్వహణ", titleEn: "Water Management", videoId: "dQw4w9WgXcQ", emoji: "💧" },
-  { title: "చీడపీడల నివారణ", titleEn: "Pest Control", videoId: "dQw4w9WgXcQ", emoji: "🐛" },
-  { title: "పాలీహౌస్ సాగు", titleEn: "Polyhouse Farming", videoId: "dQw4w9WgXcQ", emoji: "🏠" },
-  { title: "వర్మి కంపోస్ట్", titleEn: "Vermicompost", videoId: "dQw4w9WgXcQ", emoji: "🪱" },
-];
-
 const LearningVideos = ({ onBack }: LearningVideosProps) => {
+  const { lang, t } = useLanguage();
+
+  const { data: videos, isLoading } = useQuery({
+    queryKey: ["videos"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("videos").select("*").eq("published", true).order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
   return (
     <section className="px-4 py-6">
       <button onClick={onBack} className="flex items-center gap-2 text-primary mb-4 font-telugu text-lg active:scale-95 transition-transform">
-        <ArrowLeft size={24} /> వెనుకకు
+        <ArrowLeft size={24} /> {lang === "te" ? "వెనుకకు" : "Back"}
       </button>
-
       <div className="flex items-center gap-3 mb-6">
         <span className="text-4xl">🎥</span>
-        <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-telugu">నేర్చుకోండి</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-foreground font-telugu">{lang === "te" ? "నేర్చుకోండి" : "Learn"}</h2>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {videos.map((v, i) => (
-          <div key={i} className="bg-card rounded-2xl border border-border overflow-hidden card-hover">
-            <div className="relative bg-muted aspect-video flex items-center justify-center">
-              <div className="text-center">
-                <span className="text-5xl block mb-2">{v.emoji}</span>
-                <p className="text-sm text-muted-foreground font-telugu">▶ వీడియో చూడండి</p>
+      {isLoading ? (
+        <div className="flex justify-center py-12"><div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>
+      ) : !videos?.length ? (
+        <p className="text-center text-muted-foreground font-telugu py-12">{lang === "te" ? "వీడియోలు త్వరలో జోడించబడతాయి" : "Videos coming soon"}</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {videos.map((v) => (
+            <div key={v.id} className="bg-card rounded-2xl border border-border overflow-hidden card-hover">
+              <div className="relative aspect-video">
+                <iframe
+                  src={`https://www.youtube.com/embed/${v.youtube_id}`}
+                  title={v.title_en || ""}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+              <div className="p-4">
+                <h3 className="text-lg font-bold font-telugu">{v.emoji} {t(v.title_te, v.title_en)}</h3>
               </div>
             </div>
-            <div className="p-4">
-              <h3 className="text-lg font-bold font-telugu">{v.title}</h3>
-              <p className="text-xs text-muted-foreground">{v.titleEn}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <p className="text-center text-sm text-muted-foreground mt-6 font-telugu">
-        🎬 డెమో — అసలు YouTube వీడియోలు త్వరలో జోడించబడతాయి
-      </p>
+          ))}
+        </div>
+      )}
     </section>
   );
 };

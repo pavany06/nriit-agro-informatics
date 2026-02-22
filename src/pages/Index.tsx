@@ -9,50 +9,49 @@ import AgriNews from "@/components/AgriNews";
 import FarmingMethods from "@/components/FarmingMethods";
 import LearningVideos from "@/components/LearningVideos";
 import VoiceAssistant from "@/components/VoiceAssistant";
+import LanguageToggle from "@/components/LanguageToggle";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import SpeakButton from "@/components/SpeakButton";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState<string | null>(null);
+  const { lang } = useLanguage();
+
+  const { data: alerts } = useQuery({
+    queryKey: ["home_alerts"],
+    queryFn: async () => {
+      const { data } = await supabase.from("alerts").select("*").eq("active", true).order("created_at", { ascending: false }).limit(3);
+      return data || [];
+    },
+  });
 
   const handleBack = () => setActiveSection(null);
 
   const renderSection = () => {
     switch (activeSection) {
-      case "weather":
-        return <WeatherSection onBack={handleBack} />;
-      case "disease":
-        return <DiseaseScanner onBack={handleBack} />;
-      case "market":
-        return <MarketRates onBack={handleBack} />;
-      case "schemes":
-        return <GovernmentSchemes onBack={handleBack} />;
-      case "news":
-        return <AgriNews onBack={handleBack} />;
-      case "methods":
-        return <FarmingMethods onBack={handleBack} />;
-      case "videos":
-        return <LearningVideos onBack={handleBack} />;
-      case "voice":
-        setActiveSection(null);
-        return null;
-      default:
-        return null;
+      case "weather": return <WeatherSection onBack={handleBack} />;
+      case "disease": return <DiseaseScanner onBack={handleBack} />;
+      case "market": return <MarketRates onBack={handleBack} />;
+      case "schemes": return <GovernmentSchemes onBack={handleBack} />;
+      case "news": return <AgriNews onBack={handleBack} />;
+      case "methods": return <FarmingMethods onBack={handleBack} />;
+      case "videos": return <LearningVideos onBack={handleBack} />;
+      case "voice": setActiveSection(null); return null;
+      default: return null;
     }
   };
 
   return (
     <div className="min-h-screen bg-background pb-24 max-w-2xl mx-auto">
-      {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🌾</span>
             <span className="font-bold font-telugu text-foreground text-lg">NRIIT Agro</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs px-2 py-1 rounded-full bg-success/10 text-success font-bold">
-              తెలుగు
-            </span>
-          </div>
+          <LanguageToggle />
         </div>
       </header>
 
@@ -61,21 +60,35 @@ const Index = () => {
       ) : (
         <>
           <HeroSection />
+
+          {/* Active Alerts */}
+          {alerts && alerts.length > 0 && (
+            <div className="px-4 pt-4 space-y-2">
+              {alerts.map((a) => (
+                <div key={a.id} className={`p-3 rounded-xl border font-telugu text-sm flex items-center justify-between ${
+                  a.alert_type === "danger" ? "bg-destructive/10 border-destructive/30 text-destructive" :
+                  a.alert_type === "warning" ? "bg-warning/10 border-warning/30 text-warning-foreground" :
+                  "bg-primary/10 border-primary/30 text-primary"
+                }`}>
+                  <span>{a.alert_type === "danger" ? "🚨" : a.alert_type === "warning" ? "⚠️" : "ℹ️"} {lang === "te" ? (a.message_te || a.message_en) : a.message_en}</span>
+                  <SpeakButton text={lang === "te" ? (a.message_te || a.message_en) : a.message_en} lang={lang === "te" ? "te-IN" : "en-US"} size="sm" />
+                </div>
+              ))}
+            </div>
+          )}
+
           <FeatureGrid onSectionClick={setActiveSection} />
 
-          {/* Footer */}
           <footer className="text-center px-4 py-6 mt-4 border-t border-border">
-            <p className="text-sm text-muted-foreground font-telugu">
-              🌾 NRIIT వ్యవసాయ సమాచారం © 2026
-            </p>
+            <p className="text-sm text-muted-foreground font-telugu">🌾 NRIIT వ్యవసాయ సమాచారం © 2026</p>
             <p className="text-xs text-muted-foreground mt-1">
-              తెలుగు రైతుల కోసం ❤️ తో తయారు చేయబడింది
+              {lang === "te" ? "తెలుగు రైతుల కోసం ❤️ తో తయారు చేయబడింది" : "Made with ❤️ for Telugu Farmers"}
             </p>
+            <a href="/admin/login" className="text-xs text-muted-foreground/50 mt-2 inline-block">Admin</a>
           </footer>
         </>
       )}
 
-      {/* Floating Voice Assistant */}
       <VoiceAssistant />
     </div>
   );
