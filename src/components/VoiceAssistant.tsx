@@ -1,68 +1,127 @@
 import { Mic, MicOff, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
+
+type Msg = { role: "user" | "assistant"; content: string };
 
 const VoiceAssistant = () => {
+  const { lang } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [messages, setMessages] = useState<{ role: "user" | "assistant"; text: string }[]>([
-    { role: "assistant", text: "నమస్కారం! నేను మీ వ్యవసాయ సహాయకుడిని. మీకు ఏమి సహాయం కావాలో చెప్పండి. 🌾" },
+  const [isLoading, setIsLoading] = useState(false);
+  const [messages, setMessages] = useState<Msg[]>([
+    { role: "assistant", content: lang === "te" ? "నమస్కారం! నేను మీ వ్యవసాయ సహాయకుడిని. మీకు ఏమి సహాయం కావాలో చెప్పండి. 🌾" : "Hello! I'm your agriculture assistant. How can I help you? 🌾" },
   ]);
   const [input, setInput] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+
+  const streamChat = async (allMessages: Msg[]) => {
+    setIsLoading(true);
+    let assistantSoFar = "";
+
+    try {
+      const resp = await fetch(CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ messages: allMessages }),
+      });
+
+      if (!resp.ok || !resp.body) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed");
+      }
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "" || !line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              assistantSoFar += content;
+              setMessages((prev) => {
+                const last = prev[prev.length - 1];
+                if (last?.role === "assistant" && prev.length > allMessages.length) {
+                  return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantSoFar } : m);
+                }
+                return [...prev, { role: "assistant", content: assistantSoFar }];
+              });
+              scrollToBottom();
+            }
+          } catch {
+            textBuffer = line + "\n" + textBuffer;
+            break;
+          }
+        }
+      }
+
+      // Speak the response
+      if (assistantSoFar) {
+        const utterance = new SpeechSynthesisUtterance(assistantSoFar.substring(0, 500));
+        utterance.lang = lang === "te" ? "te-IN" : "en-US";
+        utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
+      }
+    } catch (e) {
+      setMessages((prev) => [...prev, { role: "assistant", content: lang === "te" ? "❌ సేవ అందుబాటులో లేదు. మళ్ళీ ప్రయత్నించండి." : "❌ Service unavailable. Please try again." }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const toggleListening = () => {
     if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
-      alert("మీ బ్రౌజర్ వాయిస్ ని సపోర్ట్ చేయడం లేదు");
+      alert(lang === "te" ? "మీ బ్రౌజర్ వాయిస్ ని సపోర్ట్ చేయడం లేదు" : "Voice not supported in your browser");
       return;
     }
-
-    if (isListening) {
-      setIsListening(false);
-      return;
-    }
+    if (isListening) { setIsListening(false); return; }
 
     const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     const recognition = new SpeechRecognition();
-    recognition.lang = "te-IN";
+    recognition.lang = lang === "te" ? "te-IN" : "en-US";
     recognition.interimResults = false;
-
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
       setInput(transcript);
       handleSend(transcript);
     };
-
     recognition.onerror = () => setIsListening(false);
     recognition.onend = () => setIsListening(false);
-
     recognition.start();
     setIsListening(true);
   };
 
   const handleSend = (text?: string) => {
     const message = text || input;
-    if (!message.trim()) return;
+    if (!message.trim() || isLoading) return;
 
-    setMessages((prev) => [...prev, { role: "user", text: message }]);
+    const userMsg: Msg = { role: "user", content: message };
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
     setInput("");
-
-    // Demo response (Gemini API needed for real)
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          text: "మీ ప్రశ్నకు ధన్యవాదాలు! AI సహాయకుడు త్వరలో అందుబాటులో ఉంటాడు. ప్రస్తుతం డెమో మోడ్‌లో ఉన్నాం. 🌱",
-        },
-      ]);
-
-      // Speak response
-      const utterance = new SpeechSynthesisUtterance(
-        "మీ ప్రశ్నకు ధన్యవాదాలు! AI సహాయకుడు త్వరలో అందుబాటులో ఉంటాడు."
-      );
-      utterance.lang = "te-IN";
-      utterance.rate = 0.9;
-      window.speechSynthesis.speak(utterance);
-    }, 1000);
+    streamChat(newMessages);
   };
 
   if (!isOpen) {
@@ -70,7 +129,7 @@ const VoiceAssistant = () => {
       <button
         onClick={() => setIsOpen(true)}
         className="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-accent text-accent-foreground flex items-center justify-center shadow-lg animate-pulse-glow z-50 active:scale-95 transition-transform"
-        aria-label="AI సహాయకుడు"
+        aria-label="AI"
       >
         <Mic size={28} />
       </button>
@@ -79,45 +138,43 @@ const VoiceAssistant = () => {
 
   return (
     <div className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:w-96 sm:h-[500px] bg-background border border-border rounded-none sm:rounded-2xl shadow-2xl z-50 flex flex-col">
-      {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border bg-primary text-primary-foreground rounded-t-none sm:rounded-t-2xl">
         <div className="flex items-center gap-2">
           <span className="text-2xl">🎤</span>
-          <h3 className="font-bold font-telugu text-lg">AI సహాయకుడు</h3>
+          <h3 className="font-bold font-telugu text-lg">{lang === "te" ? "AI సహాయకుడు" : "AI Assistant"}</h3>
         </div>
-        <button onClick={() => setIsOpen(false)} className="active:scale-95 transition-transform">
-          <X size={24} />
-        </button>
+        <button onClick={() => setIsOpen(false)} className="active:scale-95 transition-transform"><X size={24} /></button>
       </div>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div
-              className={`max-w-[80%] rounded-2xl px-4 py-3 font-telugu text-sm ${
-                msg.role === "user"
-                  ? "bg-primary text-primary-foreground rounded-br-sm"
-                  : "bg-card text-card-foreground border border-border rounded-bl-sm"
-              }`}
-            >
-              {msg.text}
+            <div className={`max-w-[80%] rounded-2xl px-4 py-3 font-telugu text-sm ${
+              msg.role === "user" ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-card text-card-foreground border border-border rounded-bl-sm"
+            }`}>
+              {msg.content}
             </div>
           </div>
         ))}
+        {isLoading && messages[messages.length - 1]?.role === "user" && (
+          <div className="flex justify-start">
+            <div className="bg-card border border-border rounded-2xl rounded-bl-sm px-4 py-3">
+              <div className="flex gap-1">
+                <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
+                <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
+                <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+              </div>
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
       <div className="p-4 border-t border-border">
         <div className="flex items-center gap-2">
-          <button
-            onClick={toggleListening}
-            className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 active:scale-95 transition-all ${
-              isListening
-                ? "bg-destructive text-destructive-foreground animate-pulse-glow"
-                : "bg-accent text-accent-foreground"
-            }`}
-          >
+          <button onClick={toggleListening} className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 active:scale-95 transition-all ${
+            isListening ? "bg-destructive text-destructive-foreground animate-pulse-glow" : "bg-accent text-accent-foreground"
+          }`}>
             {isListening ? <MicOff size={22} /> : <Mic size={22} />}
           </button>
           <input
@@ -125,19 +182,16 @@ const VoiceAssistant = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="మీ ప్రశ్న టైప్ చేయండి..."
+            placeholder={lang === "te" ? "మీ ప్రశ్న టైప్ చేయండి..." : "Type your question..."}
             className="flex-1 bg-muted rounded-xl px-4 py-3 text-sm font-telugu outline-none focus:ring-2 focus:ring-primary"
           />
-          <button
-            onClick={() => handleSend()}
-            className="px-4 py-3 bg-primary text-primary-foreground rounded-xl font-telugu font-bold text-sm active:scale-95 transition-transform"
-          >
-            పంపు
+          <button onClick={() => handleSend()} disabled={isLoading} className="px-4 py-3 bg-primary text-primary-foreground rounded-xl font-telugu font-bold text-sm active:scale-95 transition-transform disabled:opacity-50">
+            {lang === "te" ? "పంపు" : "Send"}
           </button>
         </div>
         {isListening && (
           <p className="text-center text-sm text-accent font-telugu mt-2 animate-pulse">
-            🎤 వింటున్నాను... మాట్లాడండి
+            🎤 {lang === "te" ? "వింటున్నాను... మాట్లాడండి" : "Listening... Speak now"}
           </p>
         )}
       </div>

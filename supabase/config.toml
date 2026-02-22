@@ -1,1 +1,13 @@
 project_id = "qobvkspgyceniblgtojj"
+
+[functions.weather]
+verify_jwt = false
+
+[functions.chat]
+verify_jwt = false
+
+[functions.crop-scan]
+verify_jwt = false
+
+[functions.translate]
+verify_jwt = false
