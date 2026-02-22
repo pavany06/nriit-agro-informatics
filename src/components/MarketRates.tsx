@@ -1,7 +1,8 @@
 import { ArrowLeft, Mic, MicOff, Search, Loader2 } from "lucide-react";
 import SpeakButton from "./SpeakButton";
+import MarketPriceChart from "./MarketPriceChart";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 interface MarketRatesProps {
   onBack: () => void;
@@ -44,10 +45,15 @@ const MarketRates = ({ onBack }: MarketRatesProps) => {
   const [error, setError] = useState("");
   const [listening, setListening] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [selectedCrop, setSelectedCrop] = useState("");
   const recognitionRef = useRef<any>(null);
 
+  // Auto-fetch all AP crops on mount
+  useEffect(() => {
+    fetchPrices("");
+  }, []);
+
   const fetchPrices = async (commodity: string) => {
-    if (!commodity.trim()) return;
     setLoading(true);
     setError("");
     setSearched(true);
@@ -55,12 +61,12 @@ const MarketRates = ({ onBack }: MarketRatesProps) => {
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/market-prices`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ commodity: commodity.trim(), state: "Andhra Pradesh" }),
+        body: JSON.stringify({ commodity: commodity.trim() || undefined, state: "Andhra Pradesh" }),
       });
       if (!resp.ok) throw new Error("Failed");
       const data = await resp.json();
       setRecords(data.records || []);
-      if ((data.records || []).length === 0) {
+      if ((data.records || []).length === 0 && commodity.trim()) {
         setError(lang === "te" ? "ఈ పంటకు ధరలు లేవు. వేరే పేరు ప్రయత్నించండి." : "No prices found. Try a different crop name.");
       }
     } catch {
@@ -174,15 +180,34 @@ const MarketRates = ({ onBack }: MarketRatesProps) => {
             <p className="text-sm text-muted-foreground font-telugu">
               📅 {lang === "te" ? `${records.length} ఫలితాలు (₹/క్వింటాల్)` : `${records.length} results (₹/quintal)`}
             </p>
-            <SpeakButton
-              text={lang === "te"
-                ? `${records[0].commodity} ధర ${records[0].market} లో. కనిష్ట ${records[0].min_price}, గరిష్ట ${records[0].max_price}, సాధారణ ${records[0].modal_price} రూపాయలు.`
-                : `${records[0].commodity} price in ${records[0].market}. Min ${records[0].min_price}, Max ${records[0].max_price}, Modal ${records[0].modal_price} rupees.`}
-              lang={lang === "te" ? "te-IN" : "en-US"} size="md"
-            />
           </div>
 
-          {records.map((r, i) => (
+          {/* Crop filter chips */}
+          {(() => {
+            const uniqueCrops = [...new Set(records.map((r) => r.commodity))];
+            return uniqueCrops.length > 1 ? (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {uniqueCrops.slice(0, 15).map((crop) => (
+                  <button
+                    key={crop}
+                    onClick={() => setSelectedCrop(selectedCrop === crop ? "" : crop)}
+                    className={`px-3 py-1 rounded-full text-sm font-telugu transition-colors ${
+                      selectedCrop === crop
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-primary/10"
+                    }`}
+                  >
+                    {getEmoji(crop)} {crop}
+                  </button>
+                ))}
+              </div>
+            ) : null;
+          })()}
+
+          {/* Price chart for selected crop */}
+          {selectedCrop && <MarketPriceChart records={records} selectedCrop={selectedCrop} />}
+
+          {(selectedCrop ? records.filter((r) => r.commodity.toLowerCase() === selectedCrop.toLowerCase()) : records).map((r, i) => (
             <div key={i} className="bg-card rounded-2xl p-4 border border-border card-hover">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-lg font-bold font-telugu">
@@ -222,11 +247,10 @@ const MarketRates = ({ onBack }: MarketRatesProps) => {
         </div>
       )}
 
-      {!loading && !error && !searched && (
+      {!loading && !error && records.length === 0 && searched && (
         <div className="text-center py-8 text-muted-foreground font-telugu">
-          <p className="text-4xl mb-3">🎤</p>
-          <p className="text-lg">{lang === "te" ? "మైక్ నొక్కి పంట పేరు చెప్పండి" : "Press mic and say a crop name"}</p>
-          <p className="text-sm mt-2">{lang === "te" ? "ఉదా: Rice, Chilli, Onion, Tomato" : "e.g. Rice, Chilli, Onion, Tomato"}</p>
+          <p className="text-4xl mb-3">🔍</p>
+          <p className="text-lg">{lang === "te" ? "ఫలితాలు లేవు" : "No results found"}</p>
         </div>
       )}
     </section>
