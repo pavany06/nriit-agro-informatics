@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.govt-schemes]
 verify_jwt = false
+
+[functions.agri-news]
+verify_jwt = false
