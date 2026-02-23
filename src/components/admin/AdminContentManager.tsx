@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Trash2, Plus, Save } from "lucide-react";
+import { Trash2, Plus, Save, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 interface AdminContentManagerProps {
@@ -40,8 +40,14 @@ const fieldConfigs: Record<string, { fields: { key: string; label: string; type:
     fields: [
       { key: "name_en", label: "Name (English)", type: "text" },
       { key: "description_en", label: "Description (English)", type: "textarea" },
+      { key: "steps_en", label: "Steps (English)", type: "textarea" },
+      { key: "benefits_en", label: "Benefits (English)", type: "textarea" },
+      { key: "suitable_crops_en", label: "Suitable Crops (English)", type: "textarea" },
+      { key: "difficulty", label: "Difficulty", type: "select", options: ["easy", "medium", "advanced"] },
+      { key: "category", label: "Category", type: "select", options: ["organic", "irrigation", "soil", "technology", "pest_management"] },
       { key: "emoji", label: "Emoji", type: "text" },
-      { key: "image_url", label: "Image URL", type: "text" },
+      { key: "image_url", label: "Image", type: "image_upload" },
+      { key: "video_url", label: "YouTube Video URL", type: "text" },
       { key: "published", label: "Published", type: "checkbox" },
     ],
   },
@@ -67,6 +73,53 @@ const translateContent = async (texts: Record<string, string>, fields: string[])
   } catch {
     return {};
   }
+};
+
+const ImageUploadField = ({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (url: string) => void;
+}) => {
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("farming-images").upload(path, file);
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("farming-images").getPublicUrl(path);
+      onChange(urlData.publicUrl);
+      toast.success("Image uploaded!");
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      {value && <img src={value} alt="Preview" className="w-full h-32 object-cover rounded-xl border border-border" />}
+      <label className="flex items-center gap-2 px-4 py-3 bg-muted border border-border rounded-xl cursor-pointer hover:bg-muted/80 transition-colors">
+        <Upload size={16} />
+        <span className="text-sm font-bold">{uploading ? "Uploading..." : "Upload Image"}</span>
+        <input type="file" accept="image/*" onChange={handleUpload} disabled={uploading} className="hidden" />
+      </label>
+      <input
+        type="text"
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Or paste image URL"
+        className="w-full px-4 py-2 rounded-xl bg-muted border border-border outline-none focus:ring-2 focus:ring-primary text-sm"
+      />
+    </div>
+  );
 };
 
 const AdminContentManager = ({ tableName, tabId }: AdminContentManagerProps) => {
@@ -102,7 +155,6 @@ const AdminContentManager = ({ tableName, tabId }: AdminContentManagerProps) => 
     setSaving(true);
 
     try {
-      // Auto-translate English fields to Telugu
       const enFields: Record<string, string> = {};
       const fieldNames: string[] = [];
       config.fields.forEach((f) => {
@@ -118,13 +170,11 @@ const AdminContentManager = ({ tableName, tabId }: AdminContentManagerProps) => 
         translations = await translateContent(enFields, fieldNames);
       }
 
-      // Merge translations into item
       const saveData = { ...editingItem };
       Object.entries(translations).forEach(([key, value]) => {
         saveData[key] = value;
       });
 
-      // Remove id for new items
       if (isNew) {
         delete saveData.id;
         delete saveData.created_at;
@@ -171,7 +221,6 @@ const AdminContentManager = ({ tableName, tabId }: AdminContentManagerProps) => 
         </button>
       </div>
 
-      {/* Edit Form */}
       {editingItem && (
         <div className="bg-card rounded-2xl p-6 border-2 border-primary/30 mb-6 space-y-4">
           <h4 className="font-bold text-foreground">{isNew ? "New Item" : "Edit Item"}</h4>
@@ -180,7 +229,12 @@ const AdminContentManager = ({ tableName, tabId }: AdminContentManagerProps) => 
           {config.fields.map((field) => (
             <div key={field.key}>
               <label className="block text-sm font-bold text-foreground mb-1">{field.label}</label>
-              {field.type === "textarea" ? (
+              {field.type === "image_upload" ? (
+                <ImageUploadField
+                  value={editingItem[field.key] || ""}
+                  onChange={(url) => setEditingItem({ ...editingItem, [field.key]: url })}
+                />
+              ) : field.type === "textarea" ? (
                 <textarea
                   value={editingItem[field.key] || ""}
                   onChange={(e) => setEditingItem({ ...editingItem, [field.key]: e.target.value })}
@@ -223,7 +277,6 @@ const AdminContentManager = ({ tableName, tabId }: AdminContentManagerProps) => 
         </div>
       )}
 
-      {/* Items List */}
       {isLoading ? (
         <div className="flex justify-center py-12"><div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>
       ) : !items?.length ? (
@@ -243,6 +296,8 @@ const AdminContentManager = ({ tableName, tabId }: AdminContentManagerProps) => 
                   {new Date(item.created_at).toLocaleDateString()}
                   {" • "}
                   {item.published !== undefined ? (item.published ? "✅ Published" : "❌ Draft") : (item.active ? "✅ Active" : "❌ Inactive")}
+                  {item.difficulty && ` • ${item.difficulty}`}
+                  {item.category && ` • ${item.category}`}
                 </p>
               </div>
               <div className="flex gap-2 flex-shrink-0">

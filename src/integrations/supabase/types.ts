@@ -46,40 +46,67 @@ export type Database = {
       }
       farming_methods: {
         Row: {
+          benefits_en: string | null
+          benefits_te: string | null
+          category: string | null
           created_at: string
           description_en: string | null
           description_te: string | null
+          difficulty: string | null
           emoji: string | null
           id: string
           image_url: string | null
           name_en: string
           name_te: string | null
           published: boolean | null
+          steps_en: string | null
+          steps_te: string | null
+          suitable_crops_en: string | null
+          suitable_crops_te: string | null
           updated_at: string
+          video_url: string | null
         }
         Insert: {
+          benefits_en?: string | null
+          benefits_te?: string | null
+          category?: string | null
           created_at?: string
           description_en?: string | null
           description_te?: string | null
+          difficulty?: string | null
           emoji?: string | null
           id?: string
           image_url?: string | null
           name_en: string
           name_te?: string | null
           published?: boolean | null
+          steps_en?: string | null
+          steps_te?: string | null
+          suitable_crops_en?: string | null
+          suitable_crops_te?: string | null
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
+          benefits_en?: string | null
+          benefits_te?: string | null
+          category?: string | null
           created_at?: string
           description_en?: string | null
           description_te?: string | null
+          difficulty?: string | null
           emoji?: string | null
           id?: string
           image_url?: string | null
           name_en?: string
           name_te?: string | null
           published?: boolean | null
+          steps_en?: string | null
+          steps_te?: string | null
+          suitable_crops_en?: string | null
+          suitable_crops_te?: string | null
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: []
       }
