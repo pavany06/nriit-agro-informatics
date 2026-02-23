@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.agri-news]
 verify_jwt = false
+
+[functions.youtube-fetch]
+verify_jwt = false
