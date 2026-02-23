@@ -1,4 +1,5 @@
 import { ArrowLeft, Search, FileText, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
+import { useEffect } from "react";
 import SpeakButton from "./SpeakButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useState } from "react";
@@ -49,9 +50,9 @@ const GovernmentSchemes = ({ onBack }: GovernmentSchemesProps) => {
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     fetchSchemes("all", "");
-  });
+  }, []);
 
   const fetchSchemes = async (type: string, searchTerm: string) => {
     setLoading(true);
