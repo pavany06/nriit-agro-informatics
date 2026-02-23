@@ -1,6 +1,35 @@
 import { Mic, MicOff, X } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+
+/** Strip markdown, emojis, and special chars for cleaner speech */
+const cleanForSpeech = (text: string): string => {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "$1") // bold
+    .replace(/\*(.*?)\*/g, "$1") // italic
+    .replace(/#{1,6}\s/g, "") // headings
+    .replace(/[🌾🚜✅❌⚠️🎤📝🗓📍🆘💬❓]/gu, "") // common emojis
+    .replace(/\n{2,}/g, ". ") // double newlines to pause
+    .replace(/\n/g, ", ") // single newlines
+    .trim();
+};
+
+/** Pick the best available voice for given language */
+const getBestVoice = (langCode: string): SpeechSynthesisVoice | null => {
+  const voices = window.speechSynthesis.getVoices();
+  const prefix = langCode.split("-")[0]; // "te" or "en"
+  // Prefer voices matching full locale, then language prefix
+  const exact = voices.find(v => v.lang === langCode);
+  if (exact) return exact;
+  const partial = voices.find(v => v.lang.startsWith(prefix));
+  if (partial) return partial;
+  // Fallback: any voice with "Telugu" or "Hindi" in name for Indic
+  if (prefix === "te") {
+    const indic = voices.find(v => /telugu|hindi/i.test(v.name));
+    if (indic) return indic;
+  }
+  return null;
+};
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
@@ -18,6 +47,31 @@ const VoiceAssistant = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+
+  /** Speak text with the best available voice, handling Telugu/English */
+  const speakText = useCallback((text: string) => {
+    window.speechSynthesis.cancel();
+    const cleaned = cleanForSpeech(text);
+    if (!cleaned) return;
+
+    // Detect language: if >30% Telugu chars, use Telugu
+    const teluguChars = (cleaned.match(/[\u0C00-\u0C7F]/g) || []).length;
+    const isTeluguText = teluguChars / cleaned.length > 0.3;
+    const speechLang = isTeluguText ? "te-IN" : "en-US";
+
+    // Split into chunks for more natural speech (max ~200 chars each)
+    const chunks = cleaned.match(/.{1,200}(?:[.!?,;]|\s|$)/g) || [cleaned];
+
+    chunks.forEach((chunk, i) => {
+      const utterance = new SpeechSynthesisUtterance(chunk.trim());
+      utterance.lang = speechLang;
+      utterance.rate = isTeluguText ? 0.85 : 0.92;
+      utterance.pitch = 1.0;
+      const voice = getBestVoice(speechLang);
+      if (voice) utterance.voice = voice;
+      window.speechSynthesis.speak(utterance);
+    });
+  }, []);
 
   const streamChat = async (allMessages: Msg[]) => {
     setIsLoading(true);
@@ -77,12 +131,9 @@ const VoiceAssistant = () => {
         }
       }
 
-      // Speak the response
+      // Speak the response with best available voice
       if (assistantSoFar) {
-        const utterance = new SpeechSynthesisUtterance(assistantSoFar.substring(0, 500));
-        utterance.lang = lang === "te" ? "te-IN" : "en-US";
-        utterance.rate = 0.9;
-        window.speechSynthesis.speak(utterance);
+        speakText(assistantSoFar);
       }
     } catch (e) {
       setMessages((prev) => [...prev, { role: "assistant", content: lang === "te" ? "❌ సేవ అందుబాటులో లేదు. మళ్ళీ ప్రయత్నించండి." : "❌ Service unavailable. Please try again." }]);

@@ -1,6 +1,23 @@
 import { Volume2, VolumeX } from "lucide-react";
 import { useState, useCallback } from "react";
 
+const cleanForSpeech = (text: string): string => {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/#{1,6}\s/g, "")
+    .replace(/[🌾🚜✅❌⚠️🎤📝🗓📍🆘💬❓]/gu, "")
+    .replace(/\n{2,}/g, ". ")
+    .replace(/\n/g, ", ")
+    .trim();
+};
+
+const getBestVoice = (langCode: string): SpeechSynthesisVoice | null => {
+  const voices = window.speechSynthesis.getVoices();
+  const prefix = langCode.split("-")[0];
+  return voices.find(v => v.lang === langCode) || voices.find(v => v.lang.startsWith(prefix)) || null;
+};
+
 interface SpeakButtonProps {
   text: string;
   lang?: string;
@@ -18,14 +35,28 @@ const SpeakButton = ({ text, lang = "te-IN", className = "", size = "md" }: Spea
       return;
     }
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang;
-    utterance.rate = 0.9;
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
+    const cleaned = cleanForSpeech(text);
+    if (!cleaned) return;
 
     window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
+
+    const chunks = cleaned.match(/.{1,200}(?:[.!?,;]|\s|$)/g) || [cleaned];
+    const isTeluguLang = lang.startsWith("te");
+
+    chunks.forEach((chunk, i) => {
+      const utterance = new SpeechSynthesisUtterance(chunk.trim());
+      utterance.lang = lang;
+      utterance.rate = isTeluguLang ? 0.85 : 0.92;
+      utterance.pitch = 1.0;
+      const voice = getBestVoice(lang);
+      if (voice) utterance.voice = voice;
+      if (i === chunks.length - 1) {
+        utterance.onend = () => setIsSpeaking(false);
+        utterance.onerror = () => setIsSpeaking(false);
+      }
+      window.speechSynthesis.speak(utterance);
+    });
+
     setIsSpeaking(true);
   }, [text, lang, isSpeaking]);
 
