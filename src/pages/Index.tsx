@@ -24,22 +24,22 @@ const Index = () => {
     queryFn: async () => {
       const { data } = await supabase.from("alerts").select("*").eq("active", true).order("created_at", { ascending: false }).limit(3);
       return data || [];
-    },
+    }
   });
 
   const handleBack = () => setActiveSection(null);
 
   const renderSection = () => {
     switch (activeSection) {
-      case "weather": return <WeatherSection onBack={handleBack} />;
-      case "disease": return <DiseaseScanner onBack={handleBack} />;
-      case "market": return <MarketRates onBack={handleBack} />;
-      case "schemes": return <GovernmentSchemes onBack={handleBack} />;
-      case "news": return <AgriNews onBack={handleBack} />;
-      case "methods": return <FarmingMethods onBack={handleBack} />;
-      case "videos": return <LearningVideos onBack={handleBack} />;
-      case "voice": setActiveSection(null); return null;
-      default: return null;
+      case "weather":return <WeatherSection onBack={handleBack} />;
+      case "disease":return <DiseaseScanner onBack={handleBack} />;
+      case "market":return <MarketRates onBack={handleBack} />;
+      case "schemes":return <GovernmentSchemes onBack={handleBack} />;
+      case "news":return <AgriNews onBack={handleBack} />;
+      case "methods":return <FarmingMethods onBack={handleBack} />;
+      case "videos":return <LearningVideos onBack={handleBack} />;
+      case "voice":setActiveSection(null);return null;
+      default:return null;
     }
   };
 
@@ -49,33 +49,33 @@ const Index = () => {
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🌾</span>
-            <span className="font-bold font-telugu text-foreground text-lg">NRIIT Agro</span>
+            <span className="font-bold font-telugu text-foreground text-lg">NRIIT Agro Informatics</span>
           </div>
           <LanguageToggle />
         </div>
       </header>
 
-      {activeSection ? (
-        renderSection()
-      ) : (
-        <>
+      {activeSection ?
+      renderSection() :
+
+      <>
           <HeroSection />
 
           {/* Active Alerts */}
-          {alerts && alerts.length > 0 && (
-            <div className="px-4 pt-4 space-y-2">
-              {alerts.map((a) => (
-                <div key={a.id} className={`p-3 rounded-xl border font-telugu text-sm flex items-center justify-between ${
-                  a.alert_type === "danger" ? "bg-destructive/10 border-destructive/30 text-destructive" :
-                  a.alert_type === "warning" ? "bg-warning/10 border-warning/30 text-warning-foreground" :
-                  "bg-primary/10 border-primary/30 text-primary"
-                }`}>
-                  <span>{a.alert_type === "danger" ? "🚨" : a.alert_type === "warning" ? "⚠️" : "ℹ️"} {lang === "te" ? (a.message_te || a.message_en) : a.message_en}</span>
-                  <SpeakButton text={lang === "te" ? (a.message_te || a.message_en) : a.message_en} lang={lang === "te" ? "te-IN" : "en-US"} size="sm" />
+          {alerts && alerts.length > 0 &&
+        <div className="px-4 pt-4 space-y-2">
+              {alerts.map((a) =>
+          <div key={a.id} className={`p-3 rounded-xl border font-telugu text-sm flex items-center justify-between ${
+          a.alert_type === "danger" ? "bg-destructive/10 border-destructive/30 text-destructive" :
+          a.alert_type === "warning" ? "bg-warning/10 border-warning/30 text-warning-foreground" :
+          "bg-primary/10 border-primary/30 text-primary"}`
+          }>
+                  <span>{a.alert_type === "danger" ? "🚨" : a.alert_type === "warning" ? "⚠️" : "ℹ️"} {lang === "te" ? a.message_te || a.message_en : a.message_en}</span>
+                  <SpeakButton text={lang === "te" ? a.message_te || a.message_en : a.message_en} lang={lang === "te" ? "te-IN" : "en-US"} size="sm" />
                 </div>
-              ))}
-            </div>
           )}
+            </div>
+        }
 
           <FeatureGrid onSectionClick={setActiveSection} />
 
@@ -87,11 +87,11 @@ const Index = () => {
             <a href="/admin/login" className="text-xs text-muted-foreground/50 mt-2 inline-block">Admin</a>
           </footer>
         </>
-      )}
+      }
 
       <VoiceAssistant />
-    </div>
-  );
+    </div>);
+
 };
 
 export default Index;
