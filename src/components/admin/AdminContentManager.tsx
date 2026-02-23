@@ -59,6 +59,25 @@ const fieldConfigs: Record<string, { fields: { key: string; label: string; type:
       { key: "published", label: "Published", type: "checkbox" },
     ],
   },
+  feedback: {
+    fields: [
+      { key: "name", label: "Name", type: "readonly" },
+      { key: "mobile", label: "Mobile", type: "readonly" },
+      { key: "message", label: "Message", type: "readonly" },
+      { key: "feedback_type", label: "Type", type: "readonly" },
+      { key: "status", label: "Status", type: "select", options: ["new", "read", "resolved"] },
+    ],
+  },
+  mandis: {
+    fields: [
+      { key: "name_en", label: "Name (English)", type: "text" },
+      { key: "district_en", label: "District (English)", type: "text" },
+      { key: "address_en", label: "Address (English)", type: "textarea" },
+      { key: "phone", label: "Phone", type: "text" },
+      { key: "crops_en", label: "Crops (English)", type: "textarea" },
+      { key: "opening_hours", label: "Opening Hours", type: "text" },
+    ],
+  },
 };
 
 const translateContent = async (texts: Record<string, string>, fields: string[]) => {
@@ -229,7 +248,9 @@ const AdminContentManager = ({ tableName, tabId }: AdminContentManagerProps) => 
           {config.fields.map((field) => (
             <div key={field.key}>
               <label className="block text-sm font-bold text-foreground mb-1">{field.label}</label>
-              {field.type === "image_upload" ? (
+              {field.type === "readonly" ? (
+                <p className="px-4 py-3 rounded-xl bg-muted border border-border text-sm text-foreground">{editingItem[field.key] || "—"}</p>
+              ) : field.type === "image_upload" ? (
                 <ImageUploadField
                   value={editingItem[field.key] || ""}
                   onChange={(url) => setEditingItem({ ...editingItem, [field.key]: url })}

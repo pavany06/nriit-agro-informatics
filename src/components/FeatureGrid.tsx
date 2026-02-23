@@ -14,6 +14,10 @@ const features = [
   { id: "news", label_te: "వ్యవసాయ వార్తలు", label_en: "Agri News", emoji: "📢", color: "bg-red-500/10 text-red-600 border-red-200" },
   { id: "methods", label_te: "ఆధునిక పద్ధతులు", label_en: "Modern Methods", emoji: "🌍", color: "bg-teal-500/10 text-teal-700 border-teal-200" },
   { id: "videos", label_te: "నేర్చుకోండి", label_en: "Learn Videos", emoji: "🎥", color: "bg-primary/10 text-primary border-primary/20" },
+  { id: "calendar", label_te: "పంట క్యాలెండర్", label_en: "Crop Calendar", emoji: "🗓", color: "bg-teal-600/10 text-teal-800 border-teal-300" },
+  { id: "mandi", label_te: "మండి లొకేటర్", label_en: "Mandi Locator", emoji: "📍", color: "bg-orange-500/10 text-orange-700 border-orange-200" },
+  { id: "feedback", label_te: "అభిప్రాయం", label_en: "Feedback", emoji: "📝", color: "bg-indigo-500/10 text-indigo-700 border-indigo-200" },
+  { id: "helpline", label_te: "హెల్ప్‌లైన్", label_en: "Helpline", emoji: "🆘", color: "bg-red-600/10 text-red-700 border-red-300" },
 ];
 
 const FeatureGrid = ({ onSectionClick }: FeatureGridProps) => {
