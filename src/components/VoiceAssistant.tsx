@@ -1,5 +1,5 @@
 import { Mic, MicOff, X } from "lucide-react";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 /** Strip markdown, emojis, and special chars for cleaner speech */
@@ -45,6 +45,13 @@ const VoiceAssistant = () => {
   ]);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Listen for open-voice-assistant event from FeatureGrid
+  useEffect(() => {
+    const handler = () => setIsOpen(true);
+    window.addEventListener("open-voice-assistant", handler);
+    return () => window.removeEventListener("open-voice-assistant", handler);
+  }, []);
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 

@@ -24,19 +24,19 @@ const FeatureGrid = ({ onSectionClick }: FeatureGridProps) => {
   const { lang, t } = useLanguage();
 
   return (
-    <section className="px-4 py-6">
-      <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4 font-telugu text-center">
+    <section className="px-3 py-4">
+      <h2 className="text-lg sm:text-xl font-bold text-foreground mb-3 font-telugu text-center">
         🌾 {lang === "te" ? "సేవలు ఎంచుకోండి" : "Choose a Service"}
       </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
         {features.map((f) => (
           <button
             key={f.id}
             onClick={() => onSectionClick(f.id)}
-            className={`flex flex-col items-center justify-center gap-2 p-5 sm:p-6 rounded-2xl border-2 card-hover cursor-pointer min-h-[100px] ${f.color} active:scale-95 transition-transform`}
+            className={`flex flex-col items-center justify-center gap-1 p-3 rounded-xl border card-hover cursor-pointer min-h-[70px] ${f.color} active:scale-95 transition-transform`}
           >
-            <span className="text-3xl sm:text-4xl">{f.emoji}</span>
-            <span className="text-base sm:text-lg font-bold font-telugu leading-tight text-center">
+            <span className="text-2xl">{f.emoji}</span>
+            <span className="text-xs font-bold font-telugu leading-tight text-center">
               {t(f.label_te, f.label_en)}
             </span>
           </button>

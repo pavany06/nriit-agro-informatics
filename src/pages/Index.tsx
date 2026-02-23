@@ -46,7 +46,11 @@ const Index = () => {
       case "mandi":return <MandiLocator onBack={handleBack} />;
       case "feedback":return <FarmerFeedback onBack={handleBack} />;
       case "helpline":return <EmergencyHelpline onBack={handleBack} />;
-      case "voice":setActiveSection(null);return null;
+      case "voice":
+        // Trigger voice assistant by dispatching custom event
+        window.dispatchEvent(new CustomEvent("open-voice-assistant"));
+        setActiveSection(null);
+        return null;
       default:return null;
     }
   };
