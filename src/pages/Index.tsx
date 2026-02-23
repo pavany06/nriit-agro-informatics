@@ -96,7 +96,7 @@ const Index = () => {
             <p className="text-xs text-muted-foreground mt-1">
               {lang === "te" ? "తెలుగు రైతుల కోసం ❤️ తో తయారు చేయబడింది" : "Made with ❤️ for Telugu Farmers"}
             </p>
-            <a href="/admin/login" className="text-xs text-muted-foreground/50 mt-2 inline-block">Admin</a>
+            
           </footer>
         </>
       }
