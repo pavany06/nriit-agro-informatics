@@ -109,11 +109,11 @@ const AgriNews = ({ onBack }: AgriNewsProps) => {
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-[15px] font-bold font-telugu text-foreground leading-snug line-clamp-3">
+                  <h3 className="text-base font-bold font-telugu text-foreground leading-snug">
                     {item.title}
                   </h3>
                   {item.description && (
-                    <p className="text-sm text-muted-foreground font-telugu mt-1.5 line-clamp-2">
+                    <p className="text-sm text-muted-foreground font-telugu mt-2 leading-relaxed">
                       {item.description}
                     </p>
                   )}
