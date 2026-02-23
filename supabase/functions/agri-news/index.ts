@@ -52,9 +52,10 @@ serve(async (req) => {
     const lang = body.lang || "en";
 
     // Use Google News RSS but extract the source URL (publisher website) instead of the Google redirect link
+    // More diverse queries to get 7 days of agriculture news
     const queries = lang === "te"
-      ? ["వ్యవసాయం+తెలుగు", "agriculture+Andhra+Pradesh+Telangana", "రైతు+పంట+India"]
-      : ["agriculture+farming+India", "crop+prices+India+farmers", "agriculture+scheme+India+government"];
+      ? ["వ్యవసాయం+తెలుగు", "agriculture+Andhra+Pradesh+Telangana", "రైతు+పంట+India", "వ్యవసాయం+రైతు+భరోసా", "agriculture+farming+Telugu"]
+      : ["agriculture+farming+India", "crop+prices+India+farmers", "agriculture+scheme+India+government", "Indian+agriculture+news+today", "farming+India+crop+weather"];
 
     const allItems: any[] = [];
 
@@ -95,14 +96,21 @@ serve(async (req) => {
       return true;
     });
 
-    // Sort by date descending
-    unique.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+    // Filter to last 7 days only
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const recent = unique.filter((item) => {
+      const itemTime = new Date(item.pubDate).getTime();
+      return !isNaN(itemTime) && itemTime >= sevenDaysAgo;
+    });
 
-    // Return top 25
-    const news = unique.slice(0, 25).map((item, i) => ({
+    // Sort by date descending
+    recent.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+
+    // Return up to 40 items with FULL descriptions (no truncation)
+    const news = recent.slice(0, 40).map((item, i) => ({
       id: `news-${i}`,
       title: item.title,
-      description: item.description?.substring(0, 200) || "",
+      description: item.description || "",
       link: item.link,
       source: item.source || "",
       published_at: item.pubDate,
