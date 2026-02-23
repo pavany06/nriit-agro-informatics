@@ -13,42 +13,39 @@ serve(async (req) => {
     const API_KEY = Deno.env.get("DATA_GOV_IN_API_KEY");
     if (!API_KEY) throw new Error("API key not configured");
 
-    // Fetch from multiple states for Telugu farmers
-    const states = state ? [state] : ["Andhra Pradesh", "Telangana"];
-    const allRecords: any[] = [];
+    const params = new URLSearchParams({
+      "api-key": API_KEY,
+      format: "json",
+      limit: "200",
+    });
 
-    for (const st of states) {
-      const params = new URLSearchParams({
-        "api-key": API_KEY,
-        format: "json",
-        limit: "50",
-        "filters[state.keyword]": st,
-      });
-
-      const url = `https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?${params.toString()}`;
-      console.log("Fetching:", url);
-
-      const resp = await fetch(url);
-      if (!resp.ok) {
-        console.error("data.gov.in error for", st, resp.status);
-        continue;
-      }
-
-      const data = await resp.json();
-      if (data.records) allRecords.push(...data.records);
+    // If a specific state is requested, filter by it
+    if (state) {
+      params.set("filters[state.keyword]", state);
     }
 
+    const url = `https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?${params.toString()}`;
+    console.log("Fetching:", url);
+
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      console.error("data.gov.in error", resp.status);
+      throw new Error("API error");
+    }
+
+    const data = await resp.json();
+    let allRecords = data.records || [];
+
     // Filter by commodity name (case-insensitive partial match)
-    let filtered = allRecords;
     if (commodity) {
       const searchTerm = commodity.toLowerCase().trim();
-      filtered = allRecords.filter((r: any) =>
+      allRecords = allRecords.filter((r: any) =>
         r.commodity?.toLowerCase().includes(searchTerm) ||
         searchTerm.includes(r.commodity?.toLowerCase())
       );
     }
 
-    const records = filtered.map((r: any) => ({
+    const records = allRecords.map((r: any) => ({
       commodity: r.commodity,
       variety: r.variety,
       market: r.market,
