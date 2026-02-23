@@ -110,6 +110,81 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback: {
+        Row: {
+          created_at: string
+          feedback_type: string
+          id: string
+          message: string
+          mobile: string | null
+          name: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          feedback_type?: string
+          id?: string
+          message: string
+          mobile?: string | null
+          name?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          feedback_type?: string
+          id?: string
+          message?: string
+          mobile?: string | null
+          name?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      mandis: {
+        Row: {
+          address_en: string | null
+          address_te: string | null
+          created_at: string
+          crops_en: string | null
+          crops_te: string | null
+          district_en: string
+          district_te: string | null
+          id: string
+          name_en: string
+          name_te: string | null
+          opening_hours: string | null
+          phone: string | null
+        }
+        Insert: {
+          address_en?: string | null
+          address_te?: string | null
+          created_at?: string
+          crops_en?: string | null
+          crops_te?: string | null
+          district_en: string
+          district_te?: string | null
+          id?: string
+          name_en: string
+          name_te?: string | null
+          opening_hours?: string | null
+          phone?: string | null
+        }
+        Update: {
+          address_en?: string | null
+          address_te?: string | null
+          created_at?: string
+          crops_en?: string | null
+          crops_te?: string | null
+          district_en?: string
+          district_te?: string | null
+          id?: string
+          name_en?: string
+          name_te?: string | null
+          opening_hours?: string | null
+          phone?: string | null
+        }
+        Relationships: []
+      }
       news: {
         Row: {
           created_at: string

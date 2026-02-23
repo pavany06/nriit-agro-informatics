@@ -10,6 +10,10 @@ import FarmingMethods from "@/components/FarmingMethods";
 import LearningVideos from "@/components/LearningVideos";
 import VoiceAssistant from "@/components/VoiceAssistant";
 import LanguageToggle from "@/components/LanguageToggle";
+import CropCalendar from "@/components/CropCalendar";
+import MandiLocator from "@/components/MandiLocator";
+import FarmerFeedback from "@/components/FarmerFeedback";
+import EmergencyHelpline from "@/components/EmergencyHelpline";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +42,10 @@ const Index = () => {
       case "news":return <AgriNews onBack={handleBack} />;
       case "methods":return <FarmingMethods onBack={handleBack} />;
       case "videos":return <LearningVideos onBack={handleBack} />;
+      case "calendar":return <CropCalendar onBack={handleBack} />;
+      case "mandi":return <MandiLocator onBack={handleBack} />;
+      case "feedback":return <FarmerFeedback onBack={handleBack} />;
+      case "helpline":return <EmergencyHelpline onBack={handleBack} />;
       case "voice":setActiveSection(null);return null;
       default:return null;
     }

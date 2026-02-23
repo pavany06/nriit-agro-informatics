@@ -10,6 +10,8 @@ const tabs = [
   { id: "alerts", label: "⚠️ Alerts", table: "alerts" },
   { id: "methods", label: "🌍 Methods", table: "farming_methods" },
   { id: "videos", label: "🎥 Videos", table: "videos" },
+  { id: "feedback", label: "📝 Feedback", table: "feedback" },
+  { id: "mandis", label: "📍 Mandis", table: "mandis" },
 ];
 
 const AdminDashboard = () => {
