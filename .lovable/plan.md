@@ -1,83 +1,157 @@
 
 
-# Modern Farming Methods Page - Enhancement Plan
+# New Features: Crop Calendar, Mandi Locator, Feedback, Emergency Helpline
 
-## Current State
-The Farming Methods page currently shows a simple list of cards fetched from the `farming_methods` database table, with name, emoji, image URL, and description in English/Telugu. The admin panel allows adding methods with basic text fields and an image URL.
+## Overview
+We will add 4 new sections to the app: a Crop Calendar for AP/Telangana, a Mandi/Market Locator, a Farmer Feedback system (with voice, text, enquiry, and mobile number), and an Emergency Helpline directory with government numbers.
 
-## What We Will Implement
+---
 
-### 1. Richer Content per Method
-Add new database columns to the `farming_methods` table:
-- `steps_en` / `steps_te` (text) -- Step-by-step implementation guide
-- `benefits_en` / `benefits_te` (text) -- Key benefits list
-- `suitable_crops_en` / `suitable_crops_te` (text) -- Which crops this method works for
-- `difficulty` (text) -- "easy", "medium", "advanced"
-- `category` (text) -- "organic", "irrigation", "soil", "technology", "pest_management"
-- `video_url` (text) -- Optional YouTube link for the method
+## 1. Crop Calendar / Seasonal Planner
 
-### 2. Image Upload in Admin Panel
-- Create a `farming-images` storage bucket so admins can upload images directly instead of pasting URLs
-- Add a file upload input to the admin form for farming methods
-- Upload images to storage and auto-set the `image_url` field
+A static, data-rich component showing month-by-month planting guides for major AP/Telangana crops.
 
-### 3. Real-time Data Refresh
-- Enable Supabase Realtime on the `farming_methods` table
-- When admin adds/edits/deletes a method, the farmer-facing page updates instantly without refresh
+**What farmers see:**
+- Filter by crop type (Rice, Cotton, Chilli, Groundnut, Sugarcane, Maize, Turmeric, Redgram)
+- Monthly timeline showing Sowing, Growing, and Harvesting windows
+- Color-coded bars: Green = Sow, Yellow = Growing, Orange = Harvest
+- Telugu labels and Speak button for each crop's info
+- Region tags (AP / Telangana / Both)
 
-### 4. Enhanced Farmer-Facing UI
-- Add category filter chips (Organic, Irrigation, Soil, Technology, Pest Management)
-- Expandable cards: tap a method to see full details (steps, benefits, suitable crops)
-- Difficulty badge on each card (Easy/Medium/Advanced with color coding)
-- Embedded YouTube video player when a video URL is provided
-- Search/filter bar to find methods quickly
+**No database needed** -- crop calendar data is hardcoded since planting seasons are well-known and rarely change.
 
-### 5. Updated Admin Form
-- Add all new fields (steps, benefits, suitable crops, difficulty, category, video URL)
-- Image file upload button replacing the plain URL input
-- Auto-translation for all new text fields (English to Telugu)
+**New file:** `src/components/CropCalendar.tsx`
+
+---
+
+## 2. Mandi / Market Locator
+
+A directory of agricultural markets (mandis) in AP and Telangana with contact info.
+
+**What farmers see:**
+- Filter by district or search by name
+- Cards showing: Mandi name, district, address, phone number, crops they buy, opening hours
+- Click-to-call phone number button
+- Telugu translations for all labels
+
+**Database table:** `mandis` -- pre-populated with ~15-20 major mandis from AP/Telangana
+
+**New file:** `src/components/MandiLocator.tsx`
+
+---
+
+## 3. Farmer Feedback & Enquiry System
+
+Farmers can submit voice or text feedback and enquiries. Admin sees all submissions in a new "Feedback" tab.
+
+**What farmers see:**
+- A new "Feedback" button in the feature grid
+- Form with: Name (optional), Mobile Number, Message (text or voice input), Type (Feedback / Enquiry / Complaint)
+- Voice record button that converts speech to text
+- Speak button to hear confirmation
+
+**What admin sees:**
+- New "Feedback" tab in admin dashboard
+- List of all submissions with name, mobile, message, type, date
+- Status toggle (New / Read / Resolved)
+
+**Database table:** `feedback` with columns: id, name, mobile, message, feedback_type, status, created_at
+
+**New files:**
+- `src/components/FarmerFeedback.tsx`
+- Admin tab added to `AdminDashboard.tsx` and `AdminContentManager.tsx`
+
+---
+
+## 4. Emergency Helpline Directory
+
+A quick-access page with government agricultural helpline numbers.
+
+**What farmers see:**
+- List of emergency numbers with click-to-call
+- Categories: Agriculture Department, Pest Control, Animal Husbandry, Insurance, Weather Alerts, Police, Ambulance
+- Includes: Kisan Call Center (1800-180-1551), AP Agriculture Dept, TS Agriculture Dept, PMFBY helpline, etc.
+- Telugu labels with Speak button
+
+**No database needed** -- static government numbers hardcoded.
+
+**New file:** `src/components/EmergencyHelpline.tsx`
 
 ---
 
 ## Technical Details
 
 ### Database Migration
+
 ```sql
--- Add new columns to farming_methods
-ALTER TABLE public.farming_methods
-  ADD COLUMN IF NOT EXISTS steps_en text,
-  ADD COLUMN IF NOT EXISTS steps_te text,
-  ADD COLUMN IF NOT EXISTS benefits_en text,
-  ADD COLUMN IF NOT EXISTS benefits_te text,
-  ADD COLUMN IF NOT EXISTS suitable_crops_en text,
-  ADD COLUMN IF NOT EXISTS suitable_crops_te text,
-  ADD COLUMN IF NOT EXISTS difficulty text DEFAULT 'easy',
-  ADD COLUMN IF NOT EXISTS category text DEFAULT 'organic',
-  ADD COLUMN IF NOT EXISTS video_url text;
+-- Mandis table
+CREATE TABLE public.mandis (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name_en text NOT NULL,
+  name_te text,
+  district_en text NOT NULL,
+  district_te text,
+  address_en text,
+  address_te text,
+  phone text,
+  crops_en text,
+  crops_te text,
+  opening_hours text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE public.mandis ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read mandis" ON public.mandis FOR SELECT USING (true);
+CREATE POLICY "Auth insert mandis" ON public.mandis FOR INSERT WITH CHECK (true);
+CREATE POLICY "Auth update mandis" ON public.mandis FOR UPDATE USING (true);
+CREATE POLICY "Auth delete mandis" ON public.mandis FOR DELETE USING (true);
 
--- Enable realtime
-ALTER PUBLICATION supabase_realtime ADD TABLE public.farming_methods;
-
--- Create storage bucket for images
-INSERT INTO storage.buckets (id, name, public) VALUES ('farming-images', 'farming-images', true);
-
--- Storage RLS: anyone can view, authenticated can upload
-CREATE POLICY "Public read farming images" ON storage.objects FOR SELECT USING (bucket_id = 'farming-images');
-CREATE POLICY "Auth upload farming images" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'farming-images');
-CREATE POLICY "Auth delete farming images" ON storage.objects FOR DELETE USING (bucket_id = 'farming-images');
+-- Feedback table
+CREATE TABLE public.feedback (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text,
+  mobile text,
+  message text NOT NULL,
+  feedback_type text NOT NULL DEFAULT 'feedback',
+  status text NOT NULL DEFAULT 'new',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE public.feedback ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can submit feedback" ON public.feedback FOR INSERT WITH CHECK (true);
+CREATE POLICY "Auth read feedback" ON public.feedback FOR SELECT USING (true);
+CREATE POLICY "Auth update feedback" ON public.feedback FOR UPDATE USING (true);
+CREATE POLICY "Auth delete feedback" ON public.feedback FOR DELETE USING (true);
 ```
 
+### Pre-populated Mandi Data
+Insert ~15 major mandis from AP/Telangana including:
+- Guntur Mirchi Yard, Kurnool Market Yard, Ongole Market, Warangal Market Yard, Nizamabad Mandi, Karimnagar Market, Rajahmundry Market, Vijayawada Market Yard, etc.
+
+### Files to Create
+1. `src/components/CropCalendar.tsx` -- Month-by-month planting guide with crop filters
+2. `src/components/MandiLocator.tsx` -- Mandi directory with search and click-to-call
+3. `src/components/FarmerFeedback.tsx` -- Feedback/enquiry form with voice input
+4. `src/components/EmergencyHelpline.tsx` -- Government helpline numbers
+
 ### Files to Modify
-1. **`src/components/FarmingMethods.tsx`** -- Add category filters, expandable detail view, difficulty badges, search bar, realtime subscription, YouTube embed
-2. **`src/components/admin/AdminContentManager.tsx`** -- Add new fields for farming_methods config, add image upload component for the farming_methods tab
-3. **`src/integrations/supabase/types.ts`** -- Will auto-update after migration
+1. `src/components/FeatureGrid.tsx` -- Add 4 new feature buttons (Calendar, Mandi, Feedback, Helpline)
+2. `src/pages/Index.tsx` -- Add routes for new sections in renderSection switch
+3. `src/pages/AdminDashboard.tsx` -- Add "Feedback" tab
+4. `src/components/admin/AdminContentManager.tsx` -- Add feedback field config (read-only view with status toggle)
 
-### Realtime Implementation
-In `FarmingMethods.tsx`, subscribe to postgres_changes on the `farming_methods` table and invalidate the react-query cache on any change, so the page refreshes automatically.
+### Feature Grid New Buttons
+- Calendar: emoji "🗓", color teal
+- Mandi: emoji "📍", color orange  
+- Feedback: emoji "📝", color indigo
+- Helpline: emoji "🆘", color red
 
-### Image Upload Flow
-In the admin form, when the table is `farming_methods`:
-- Show a file input instead of a text URL field
-- On file select, upload to `farming-images` bucket
-- Set the returned public URL as `image_url` on the item
+### Emergency Numbers (hardcoded)
+- Kisan Call Center: 1800-180-1551
+- AP Agriculture Helpline: 1800-425-1110
+- TS Agriculture Helpline: 1800-599-5559
+- PMFBY Insurance: 1800-200-7710
+- Animal Husbandry: 1962
+- Police: 100
+- Ambulance: 108
+- Fire: 101
+- Women Helpline: 181
 
