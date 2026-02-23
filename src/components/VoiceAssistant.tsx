@@ -1,20 +1,8 @@
 import { Mic, MicOff, X } from "lucide-react";
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const cleanForSpeech = (text: string): string => {
-  return text
-    .replace(/\*\*(.*?)\*\*/g, "$1")
-    .replace(/\*(.*?)\*/g, "$1")
-    .replace(/#{1,6}\s/g, "")
-    .replace(/[🌾🚜✅❌⚠️🎤📝🗓📍🆘💬❓]/gu, "")
-    .replace(/\n{2,}/g, ". ")
-    .replace(/\n/g, ", ")
-    .trim();
-};
-
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
-const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`;
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -28,7 +16,6 @@ const VoiceAssistant = () => {
   ]);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const handler = () => setIsOpen(true);
@@ -37,43 +24,6 @@ const VoiceAssistant = () => {
   }, []);
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-
-  const speakText = useCallback(async (text: string) => {
-    // Stop any current audio
-    audioRef.current?.pause();
-    audioRef.current = null;
-
-    const cleaned = cleanForSpeech(text);
-    if (!cleaned) return;
-
-    try {
-      const response = await fetch(TTS_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({ text: cleaned }),
-      });
-
-      if (!response.ok) throw new Error("TTS failed");
-
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio;
-      audio.onended = () => URL.revokeObjectURL(audioUrl);
-      await audio.play();
-    } catch {
-      // Fallback to browser TTS
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(cleaned);
-      utterance.lang = lang === "te" ? "te-IN" : "en-US";
-      utterance.rate = 0.9;
-      window.speechSynthesis.speak(utterance);
-    }
-  }, [lang]);
 
   const streamChat = async (allMessages: Msg[]) => {
     setIsLoading(true);
@@ -131,10 +81,6 @@ const VoiceAssistant = () => {
             break;
           }
         }
-      }
-
-      if (assistantSoFar) {
-        speakText(assistantSoFar);
       }
     } catch (e) {
       setMessages((prev) => [...prev, { role: "assistant", content: lang === "te" ? "❌ సేవ అందుబాటులో లేదు. మళ్ళీ ప్రయత్నించండి." : "❌ Service unavailable. Please try again." }]);
