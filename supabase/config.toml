@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.youtube-fetch]
 verify_jwt = false
+
+[functions.azure-tts]
+verify_jwt = false
