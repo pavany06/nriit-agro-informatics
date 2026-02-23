@@ -93,9 +93,6 @@ const Index = () => {
 
           <footer className="text-center px-4 py-6 mt-4 border-t border-border">
             <p className="text-sm text-muted-foreground font-telugu">🌾 NRIIT వ్యవసాయ సమాచారం © 2026</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {lang === "te" ? "తెలుగు రైతుల కోసం ❤️ తో తయారు చేయబడింది" : "Made with love for Telugu Farmers"}
-            </p>
             
           </footer>
         </>
