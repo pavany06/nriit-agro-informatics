@@ -2,36 +2,19 @@ import { Mic, MicOff, X } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-/** Strip markdown, emojis, and special chars for cleaner speech */
 const cleanForSpeech = (text: string): string => {
   return text
-    .replace(/\*\*(.*?)\*\*/g, "$1") // bold
-    .replace(/\*(.*?)\*/g, "$1") // italic
-    .replace(/#{1,6}\s/g, "") // headings
-    .replace(/[🌾🚜✅❌⚠️🎤📝🗓📍🆘💬❓]/gu, "") // common emojis
-    .replace(/\n{2,}/g, ". ") // double newlines to pause
-    .replace(/\n/g, ", ") // single newlines
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/#{1,6}\s/g, "")
+    .replace(/[🌾🚜✅❌⚠️🎤📝🗓📍🆘💬❓]/gu, "")
+    .replace(/\n{2,}/g, ". ")
+    .replace(/\n/g, ", ")
     .trim();
 };
 
-/** Pick the best available voice for given language */
-const getBestVoice = (langCode: string): SpeechSynthesisVoice | null => {
-  const voices = window.speechSynthesis.getVoices();
-  const prefix = langCode.split("-")[0]; // "te" or "en"
-  // Prefer voices matching full locale, then language prefix
-  const exact = voices.find(v => v.lang === langCode);
-  if (exact) return exact;
-  const partial = voices.find(v => v.lang.startsWith(prefix));
-  if (partial) return partial;
-  // Fallback: any voice with "Telugu" or "Hindi" in name for Indic
-  if (prefix === "te") {
-    const indic = voices.find(v => /telugu|hindi/i.test(v.name));
-    if (indic) return indic;
-  }
-  return null;
-};
-
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
+const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`;
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -45,8 +28,8 @@ const VoiceAssistant = () => {
   ]);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Listen for open-voice-assistant event from FeatureGrid
   useEffect(() => {
     const handler = () => setIsOpen(true);
     window.addEventListener("open-voice-assistant", handler);
@@ -55,30 +38,42 @@ const VoiceAssistant = () => {
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
-  /** Speak text with the best available voice, handling Telugu/English */
-  const speakText = useCallback((text: string) => {
-    window.speechSynthesis.cancel();
+  const speakText = useCallback(async (text: string) => {
+    // Stop any current audio
+    audioRef.current?.pause();
+    audioRef.current = null;
+
     const cleaned = cleanForSpeech(text);
     if (!cleaned) return;
 
-    // Detect language: if >30% Telugu chars, use Telugu
-    const teluguChars = (cleaned.match(/[\u0C00-\u0C7F]/g) || []).length;
-    const isTeluguText = teluguChars / cleaned.length > 0.3;
-    const speechLang = isTeluguText ? "te-IN" : "en-US";
+    try {
+      const response = await fetch(TTS_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ text: cleaned }),
+      });
 
-    // Split into chunks for more natural speech (max ~200 chars each)
-    const chunks = cleaned.match(/.{1,200}(?:[.!?,;]|\s|$)/g) || [cleaned];
+      if (!response.ok) throw new Error("TTS failed");
 
-    chunks.forEach((chunk, i) => {
-      const utterance = new SpeechSynthesisUtterance(chunk.trim());
-      utterance.lang = speechLang;
-      utterance.rate = isTeluguText ? 0.85 : 0.92;
-      utterance.pitch = 1.0;
-      const voice = getBestVoice(speechLang);
-      if (voice) utterance.voice = voice;
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      audio.onended = () => URL.revokeObjectURL(audioUrl);
+      await audio.play();
+    } catch {
+      // Fallback to browser TTS
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(cleaned);
+      utterance.lang = lang === "te" ? "te-IN" : "en-US";
+      utterance.rate = 0.9;
       window.speechSynthesis.speak(utterance);
-    });
-  }, []);
+    }
+  }, [lang]);
 
   const streamChat = async (allMessages: Msg[]) => {
     setIsLoading(true);
@@ -138,7 +133,6 @@ const VoiceAssistant = () => {
         }
       }
 
-      // Speak the response with best available voice
       if (assistantSoFar) {
         speakText(assistantSoFar);
       }
