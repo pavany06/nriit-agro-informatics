@@ -1,6 +1,7 @@
 import { Mic, MicOff, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import SpeakButton from "./SpeakButton";
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
@@ -151,6 +152,11 @@ const VoiceAssistant = () => {
               msg.role === "user" ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-card text-card-foreground border border-border rounded-bl-sm"
             }`}>
               {msg.content}
+              {msg.role === "assistant" && msg.content && (
+                <div className="mt-2 flex justify-end">
+                  <SpeakButton text={msg.content} lang={lang === "te" ? "te-IN" : "en-US"} size="sm" />
+                </div>
+              )}
             </div>
           </div>
         ))}
