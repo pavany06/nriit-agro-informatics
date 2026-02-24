@@ -1,4 +1,5 @@
 import { ArrowLeft } from "lucide-react";
+import SpeakButton from "./SpeakButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,8 +47,9 @@ const LearningVideos = ({ onBack }: LearningVideosProps) => {
                   allowFullScreen
                 />
               </div>
-              <div className="p-4">
-                <h3 className="text-lg font-bold font-telugu">{v.emoji} {t(v.title_te, v.title_en)}</h3>
+              <div className="p-4 flex items-center justify-between gap-2">
+                <h3 className="text-lg font-bold font-telugu flex-1">{v.emoji} {t(v.title_te, v.title_en)}</h3>
+                <SpeakButton text={t(v.title_te, v.title_en)} lang={lang === "te" ? "te-IN" : "en-US"} size="sm" />
               </div>
             </div>
           ))}

@@ -12,3 +12,5 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+Sitemap: https://nriit-agro-informatics.netlify.app/sitemap.xml

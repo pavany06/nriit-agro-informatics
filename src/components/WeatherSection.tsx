@@ -105,8 +105,9 @@ const WeatherSection = ({ onBack }: WeatherSectionProps) => {
           </div>
 
           {alert && (
-            <div className={`p-4 rounded-xl border-2 ${alert.type === "destructive" ? "bg-destructive/10 border-destructive/30 text-destructive" : "bg-warning/10 border-warning/30 text-warning-foreground"} font-telugu text-lg`}>
-              {alert.text}
+            <div className={`p-4 rounded-xl border-2 flex items-center justify-between gap-2 ${alert.type === "destructive" ? "bg-destructive/10 border-destructive/30 text-destructive" : "bg-warning/10 border-warning/30 text-warning-foreground"} font-telugu text-lg`}>
+              <span>{alert.text}</span>
+              <SpeakButton text={alert.text} lang={lang === "te" ? "te-IN" : "en-US"} size="sm" />
             </div>
           )}
 
