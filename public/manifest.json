@@ -1,0 +1,22 @@
+{
+  "name": "NRIIT Agro Informatics - తెలుగు రైతుల వ్యవసాయ సమాచారం",
+  "short_name": "NRIIT Agro",
+  "description": "Smart agriculture assistant for Telugu farmers. Weather, market prices, government schemes, crop disease scanning in Telugu.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f5f0",
+  "theme_color": "#2E7D32",
+  "orientation": "portrait-primary",
+  "lang": "te",
+  "icons": [
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["agriculture", "education", "utilities"],
+  "screenshots": [],
+  "prefer_related_applications": false
+}
