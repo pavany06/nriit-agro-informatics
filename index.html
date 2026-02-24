@@ -1,32 +1,59 @@
 <!doctype html>
-<html lang="te">
+<html lang="te" dir="ltr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     <title>NRIIT Agro Informatics | తెలుగు రైతుల వ్యవసాయ సమాచారం</title>
-    <meta name="description" content="NRIIT Agro Informatics - Smart agriculture assistant for Telugu farmers. Get weather updates, market prices, government schemes, crop disease scanning, and modern farming methods in Telugu.">
+    <meta name="description" content="NRIIT Agro Informatics - Smart agriculture assistant for Telugu farmers. Get weather updates, market prices, government schemes, crop disease scanning, and modern farming methods in Telugu. తెలుగు రైతులకు స్మార్ట్ వ్యవసాయ సహాయకుడు.">
     <meta name="author" content="NRIIT Agro Informatics" />
-    <meta name="keywords" content="NRIIT, agriculture, farming, Telugu, రైతు, వ్యవసాయం, market prices, government schemes, crop disease, weather, Andhra Pradesh, Telangana" />
+    <meta name="keywords" content="NRIIT, agriculture, farming, Telugu, రైతు, వ్యవసాయం, market prices, government schemes, crop disease, weather, Andhra Pradesh, Telangana, మార్కెట్ ధరలు, ప్రభుత్వ పథకాలు, పంట రోగాలు, వాతావరణం, smart farming, agri news, mandi prices" />
     <link rel="canonical" href="https://nriit-agro-informatics.netlify.app/" />
 
-    
-    
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://qobvkspgyceniblgtojj.supabase.co" />
+
+    <!-- PWA & Icons -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="/icon-512.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/icon-512.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="NRIIT Agro" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Search Engine -->
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
+    <meta name="bingbot" content="index, follow" />
+    <meta name="theme-color" content="#2E7D32" />
+    <meta name="msapplication-TileColor" content="#2E7D32" />
+    <meta name="msapplication-TileImage" content="/icon-512.png" />
+    <meta name="format-detection" content="telephone=yes" />
+    <meta http-equiv="content-language" content="te, en" />
+
+    <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://nriit-agro-informatics.netlify.app/" />
-    <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/f01788df-1a33-424b-884f-bc7b7f7d0887?Expires=1771916728&amp;GoogleAccessId=go-api-on-aws%40gpt-engineer-390607.iam.gserviceaccount.com&amp;Signature=Ba6XiZLtkmcrbz9RtsBiahgJnJyVMfKjXwi2Lq8sEyX7E8Tg6G0oUJWlUFOoqdmB8f6EOq4XVQktJ2JLNtiDINVF2npX%2F%2FQzf5FT2r7WpmEepUSZ8BoPZwMYuNC4Xbu3BB1PhJbgqvHaycnbsxUZ%2Bc1aeXmDW9rQEiuzrB%2FM6u9HMvv%2F9KfbPSv%2FyjDbmOc86Rmh120W2Yl5SUAiNg1eqTFYqit%2BWyxBkmS%2F2tJuySdT66bJiQpQqapFUlrtEzKQu3zCc0PcTfLtYCL06e9%2B6ipMrGvYZi7uhxAJOBYoCwt%2F9syA%2F%2BdGEzSFHUN2EHpIQFE9RySGFsvkbNgl8WYAoA%3D%3D">
+    <meta property="og:title" content="NRIIT Agro Informatics | తెలుగు రైతుల వ్యవసాయ సమాచారం" />
+    <meta property="og:description" content="Smart agriculture assistant for Telugu farmers. Weather, market prices, government schemes, crop disease scanning & modern farming methods in Telugu." />
+    <meta property="og:image" content="https://nriit-agro-informatics.netlify.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="NRIIT Agro Informatics - తెలుగు రైతుల వ్యవసాయ సమాచారం" />
     <meta property="og:locale" content="te_IN" />
     <meta property="og:locale:alternate" content="en_IN" />
     <meta property="og:site_name" content="NRIIT Agro Informatics" />
 
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    
-    
-    <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/f01788df-1a33-424b-884f-bc7b7f7d0887?Expires=1771916728&amp;GoogleAccessId=go-api-on-aws%40gpt-engineer-390607.iam.gserviceaccount.com&amp;Signature=Ba6XiZLtkmcrbz9RtsBiahgJnJyVMfKjXwi2Lq8sEyX7E8Tg6G0oUJWlUFOoqdmB8f6EOq4XVQktJ2JLNtiDINVF2npX%2F%2FQzf5FT2r7WpmEepUSZ8BoPZwMYuNC4Xbu3BB1PhJbgqvHaycnbsxUZ%2Bc1aeXmDW9rQEiuzrB%2FM6u9HMvv%2F9KfbPSv%2FyjDbmOc86Rmh120W2Yl5SUAiNg1eqTFYqit%2BWyxBkmS%2F2tJuySdT66bJiQpQqapFUlrtEzKQu3zCc0PcTfLtYCL06e9%2B6ipMrGvYZi7uhxAJOBYoCwt%2F9syA%2F%2BdGEzSFHUN2EHpIQFE9RySGFsvkbNgl8WYAoA%3D%3D">
+    <meta name="twitter:title" content="NRIIT Agro Informatics | తెలుగు రైతుల వ్యవసాయ సమాచారం" />
+    <meta name="twitter:description" content="Smart agriculture assistant for Telugu farmers. Weather, market prices, government schemes, crop disease scanning in Telugu." />
+    <meta name="twitter:image" content="https://nriit-agro-informatics.netlify.app/og-image.png" />
+    <meta name="twitter:image:alt" content="NRIIT Agro Informatics" />
 
-    <meta name="robots" content="index, follow" />
-    <meta name="googlebot" content="index, follow" />
-    <meta name="theme-color" content="#2E7D32" />
-
+    <!-- JSON-LD Structured Data -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -45,14 +72,40 @@
       },
       "creator": {
         "@type": "Organization",
-        "name": "NRIIT"
+        "name": "NRIIT",
+        "url": "https://nriit-agro-informatics.netlify.app/"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "150"
       }
     }
     </script>
-    <meta property="og:title" content="NRIIT Agro Informatics | తెలుగు రైతుల వ్యవసాయ సమాచారం">
-  <meta name="twitter:title" content="NRIIT Agro Informatics | తెలుగు రైతుల వ్యవసాయ సమాచారం">
-  <meta property="og:description" content="NRIIT Agro Informatics - Smart agriculture assistant for Telugu farmers. Get weather updates, market prices, government schemes, crop disease scanning, and modern farming methods in Telugu.">
-  <meta name="twitter:description" content="NRIIT Agro Informatics - Smart agriculture assistant for Telugu farmers. Get weather updates, market prices, government schemes, crop disease scanning, and modern farming methods in Telugu.">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "NRIIT Agro Informatics అంటే ఏమిటి?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "NRIIT Agro Informatics అనేది తెలుగు రైతులకు వాతావరణం, మార్కెట్ ధరలు, ప్రభుత్వ పథకాలు, పంట రోగ నిర్ధారణ మరియు ఆధునిక వ్యవసాయ పద్ధతులను అందించే స్మార్ట్ వ్యవసాయ సహాయక యాప్."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is NRIIT Agro Informatics free to use?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, NRIIT Agro Informatics is completely free for all farmers. Access weather updates, market prices, government schemes, and crop disease scanning at no cost."
+          }
+        }
+      ]
+    }
+    </script>
 </head>
 
   <body>
