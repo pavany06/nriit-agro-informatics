@@ -1,0 +1,513 @@
+openapi: 3.0.3
+info:
+  title: NRIIT Agro Informatics API
+  description: Headless backend API for the NRIIT Agro Informatics mobile application. All endpoints are Supabase Edge Functions.
+  version: 1.0.0
+
+servers:
+  - url: https://qobvkspgyceniblgtojj.supabase.co/functions/v1
+    description: Production
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: apikey
+      description: Supabase anon key sent as `apikey` header on every request
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: User JWT obtained from /auth login/signup
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+    AuthTokens:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        expires_in:
+          type: integer
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            email:
+              type: string
+
+    Alert:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        alert_type: { type: string }
+        message_en: { type: string }
+        message_te: { type: string, nullable: true }
+        active: { type: boolean }
+        expires_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    Scheme:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name_en: { type: string }
+        name_te: { type: string, nullable: true }
+        eligibility_en: { type: string, nullable: true }
+        eligibility_te: { type: string, nullable: true }
+        benefit_en: { type: string, nullable: true }
+        benefit_te: { type: string, nullable: true }
+        apply_link: { type: string, nullable: true }
+        scheme_type: { type: string }
+        published: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    Video:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title_en: { type: string }
+        title_te: { type: string, nullable: true }
+        youtube_id: { type: string }
+        emoji: { type: string, nullable: true }
+        published: { type: boolean }
+        created_at: { type: string, format: date-time }
+
+    Mandi:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name_en: { type: string }
+        name_te: { type: string, nullable: true }
+        district_en: { type: string }
+        district_te: { type: string, nullable: true }
+        address_en: { type: string, nullable: true }
+        address_te: { type: string, nullable: true }
+        crops_en: { type: string, nullable: true }
+        crops_te: { type: string, nullable: true }
+        phone: { type: string, nullable: true }
+        opening_hours: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    FarmingMethod:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name_en: { type: string }
+        name_te: { type: string, nullable: true }
+        description_en: { type: string, nullable: true }
+        description_te: { type: string, nullable: true }
+        steps_en: { type: string, nullable: true }
+        steps_te: { type: string, nullable: true }
+        benefits_en: { type: string, nullable: true }
+        benefits_te: { type: string, nullable: true }
+        suitable_crops_en: { type: string, nullable: true }
+        suitable_crops_te: { type: string, nullable: true }
+        emoji: { type: string, nullable: true }
+        image_url: { type: string, nullable: true }
+        video_url: { type: string, nullable: true }
+        difficulty: { type: string, nullable: true }
+        category: { type: string, nullable: true }
+        published: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    News:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title_en: { type: string }
+        title_te: { type: string, nullable: true }
+        summary_en: { type: string, nullable: true }
+        summary_te: { type: string, nullable: true }
+        published: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    WeatherResponse:
+      type: object
+      properties:
+        temp: { type: integer }
+        feels_like: { type: integer }
+        humidity: { type: integer }
+        wind: { type: integer }
+        condition: { type: string }
+        icon: { type: string }
+        city: { type: string }
+
+    MarketRecord:
+      type: object
+      properties:
+        commodity: { type: string }
+        variety: { type: string }
+        market: { type: string }
+        district: { type: string }
+        state: { type: string }
+        min_price: { type: number }
+        max_price: { type: number }
+        modal_price: { type: number }
+        arrival_date: { type: string }
+
+    CropScanResult:
+      type: object
+      properties:
+        disease_te: { type: string }
+        disease_en: { type: string }
+        severity_te: { type: string }
+        severity_en: { type: string }
+        treatment_te: { type: string }
+        treatment_en: { type: string }
+        healthy: { type: boolean }
+
+paths:
+  /auth:
+    post:
+      summary: Authentication endpoint
+      description: Handles signup, login, logout, refresh, and reset-password via the `action` field.
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [signup, login, logout, refresh, reset-password]
+                email:
+                  type: string
+                password:
+                  type: string
+                refresh_token:
+                  type: string
+                access_token:
+                  type: string
+            examples:
+              login:
+                summary: Login
+                value: { action: login, email: farmer@example.com, password: secret123 }
+              signup:
+                summary: Signup
+                value: { action: signup, email: farmer@example.com, password: secret123 }
+              refresh:
+                summary: Refresh token
+                value: { action: refresh, refresh_token: "..." }
+              logout:
+                summary: Logout
+                value: { action: logout, access_token: "..." }
+              reset:
+                summary: Reset password
+                value: { action: reset-password, email: farmer@example.com }
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokens"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /data:
+    post:
+      summary: Data query endpoint
+      description: Query public database tables or insert feedback. Pass `table` name and optional `filters`, `limit`, `offset`. For feedback insert, set `action` to `insert` with a `record` object.
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [table]
+              properties:
+                table:
+                  type: string
+                  enum: [alerts, schemes, videos, mandis, farming_methods, news, feedback]
+                action:
+                  type: string
+                  enum: [insert]
+                  description: Set to "insert" for feedback submissions
+                filters:
+                  type: object
+                  additionalProperties: true
+                limit:
+                  type: integer
+                offset:
+                  type: integer
+                record:
+                  type: object
+                  properties:
+                    message: { type: string }
+                    name: { type: string }
+                    mobile: { type: string }
+                    feedback_type: { type: string }
+            examples:
+              read_alerts:
+                summary: Read active alerts
+                value: { table: alerts, filters: { active: true }, limit: 10 }
+              insert_feedback:
+                summary: Submit feedback
+                value: { table: feedback, action: insert, record: { message: "Great app!", name: "Ravi" } }
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      data: { type: array, items: {} }
+                      count: { type: integer }
+                  - type: object
+                    properties:
+                      success: { type: boolean }
+                      id: { type: string, format: uuid }
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /weather:
+    post:
+      summary: Weather data
+      description: Returns current weather for given coordinates using Agromonitoring API.
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lat, lon]
+              properties:
+                lat: { type: number }
+                lon: { type: number }
+      responses:
+        "200":
+          description: Weather data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeatherResponse"
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /chat:
+    post:
+      summary: AI farming assistant chat
+      description: Streaming AI chat in Telugu for farming advice. Returns SSE stream.
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [messages]
+              properties:
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      role: { type: string, enum: [user, assistant] }
+                      content: { type: string }
+      responses:
+        "200":
+          description: SSE stream
+          content:
+            text/event-stream: {}
+        "429":
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "402":
+          description: Credits exhausted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /crop-scan:
+    post:
+      summary: Crop disease scanner
+      description: Analyzes a crop image for disease detection and treatment advice.
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [image]
+              properties:
+                image:
+                  type: string
+                  description: Base64 data URI of the crop image
+      responses:
+        "200":
+          description: Scan result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CropScanResult"
+        "429":
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /translate:
+    post:
+      summary: English to Telugu translation
+      description: Translates text fields from English to Telugu.
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [texts]
+              properties:
+                texts:
+                  type: object
+                  additionalProperties: { type: string }
+                fields:
+                  type: array
+                  items: { type: string }
+      responses:
+        "200":
+          description: Translated fields with _te suffix
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: { type: string }
+
+  /market-prices:
+    post:
+      summary: Mandi market prices
+      description: Fetches commodity prices from data.gov.in.
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                commodity: { type: string }
+                state: { type: string }
+      responses:
+        "200":
+          description: Price records
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  records:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/MarketRecord"
+                  total: { type: integer }
+                  count: { type: integer }
+
+  /govt-schemes:
+    post:
+      summary: Fetch and store government schemes
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Schemes fetched
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /agri-news:
+    post:
+      summary: Fetch and store agriculture news
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: News fetched
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /azure-tts:
+    post:
+      summary: Text-to-speech
+      description: Converts Telugu text to speech audio using Azure TTS.
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text: { type: string }
+                voice: { type: string, default: te-IN-ShrutiNeural }
+      responses:
+        "200":
+          description: MP3 audio
+          content:
+            audio/mpeg: {}
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
