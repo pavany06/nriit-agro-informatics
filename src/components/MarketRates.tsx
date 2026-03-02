@@ -4,6 +4,7 @@ import MarketPriceChart from "./MarketPriceChart";
 import PriceAlertManager from "./PriceAlertManager";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useRef, useEffect } from "react";
+import { SUPABASE_URL } from "@/lib/supabaseUrl";
 
 interface MarketRatesProps {
   onBack: () => void;
@@ -21,7 +22,6 @@ interface MarketRecord {
   arrival_date: string;
 }
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const HIGHLIGHT_STATES = ["andhra pradesh", "telangana"];
 
 const cropEmojis: Record<string, string> = {

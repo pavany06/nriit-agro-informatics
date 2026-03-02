@@ -2,8 +2,9 @@ import { Mic, MicOff, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import SpeakButton from "./SpeakButton";
+import { SUPABASE_URL } from "@/lib/supabaseUrl";
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
+const CHAT_URL = `${SUPABASE_URL}/functions/v1/chat`;
 
 type Msg = { role: "user" | "assistant"; content: string };
 

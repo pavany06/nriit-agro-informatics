@@ -2,12 +2,11 @@ import { Camera, ArrowLeft } from "lucide-react";
 import SpeakButton from "./SpeakButton";
 import { useState, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { SUPABASE_URL } from "@/lib/supabaseUrl";
 
 interface DiseaseScannerProps {
   onBack: () => void;
 }
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 const DiseaseScanner = ({ onBack }: DiseaseScannerProps) => {
   const { lang } = useLanguage();

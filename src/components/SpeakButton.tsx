@@ -1,7 +1,8 @@
 import { Volume2, Loader2, Square } from "lucide-react";
 import { useState, useRef } from "react";
+import { SUPABASE_URL } from "@/lib/supabaseUrl";
 
-const TTS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/azure-tts`;
+const TTS_URL = `${SUPABASE_URL}/functions/v1/azure-tts`;
 
 interface SpeakButtonProps {
   text: string;

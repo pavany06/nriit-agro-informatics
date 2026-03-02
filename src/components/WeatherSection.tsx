@@ -2,6 +2,7 @@ import { Droplets, Wind, MapPin, ArrowLeft } from "lucide-react";
 import SpeakButton from "./SpeakButton";
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { SUPABASE_URL } from "@/lib/supabaseUrl";
 
 interface WeatherSectionProps {
   onBack: () => void;
@@ -16,8 +17,6 @@ interface WeatherData {
   icon: string;
   city: string;
 }
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 const WeatherSection = ({ onBack }: WeatherSectionProps) => {
   const { lang } = useLanguage();

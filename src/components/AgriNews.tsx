@@ -2,6 +2,7 @@ import { ArrowLeft, ExternalLink, Loader2, RefreshCw } from "lucide-react";
 import SpeakButton from "./SpeakButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useState, useEffect } from "react";
+import { SUPABASE_URL } from "@/lib/supabaseUrl";
 
 interface AgriNewsProps {
   onBack: () => void;
@@ -15,8 +16,6 @@ interface NewsItem {
   source: string;
   published_at: string;
 }
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 const AgriNews = ({ onBack }: AgriNewsProps) => {
   const { lang } = useLanguage();
