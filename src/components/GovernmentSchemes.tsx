@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import SpeakButton from "./SpeakButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useState } from "react";
+import { SUPABASE_URL } from "@/lib/supabaseUrl";
 
 interface GovernmentSchemesProps {
   onBack: () => void;
@@ -25,8 +26,6 @@ interface Scheme {
   documents_te: string;
   status: string;
 }
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 const typeLabels: Record<string, Record<string, string>> = {
   central: { te: "🇮🇳 కేంద్ర ప్రభుత్వం", en: "🇮🇳 Central Govt" },

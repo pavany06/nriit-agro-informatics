@@ -3,13 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Trash2, Plus, Save, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { SUPABASE_URL } from "@/lib/supabaseUrl";
 
 interface AdminContentManagerProps {
   tableName: string;
   tabId: string;
 }
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 const fieldConfigs: Record<string, { fields: { key: string; label: string; type: string; options?: string[] }[] }> = {
   news: {
