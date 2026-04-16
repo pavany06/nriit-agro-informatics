@@ -45,7 +45,7 @@ const WeatherSection = ({ onBack }: WeatherSectionProps) => {
       }
     };
     fetchWeather();
-  }, [lang]);
+  }, [lang, getLocation]);
 
   const getAlert = () => {
     if (!weather) return null;
