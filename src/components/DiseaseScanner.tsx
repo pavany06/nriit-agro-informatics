@@ -1,8 +1,10 @@
-import { Camera, ArrowLeft } from "lucide-react";
+import { Camera, ArrowLeft, ImageIcon } from "lucide-react";
 import SpeakButton from "./SpeakButton";
+import PermissionPrompt from "./PermissionPrompt";
 import { useState, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SUPABASE_URL } from "@/lib/supabaseUrl";
+import { useNativeCamera } from "@/hooks/useNativeCamera";
 
 interface DiseaseScannerProps {
   onBack: () => void;
@@ -14,46 +16,73 @@ const DiseaseScanner = ({ onBack }: DiseaseScannerProps) => {
   const [result, setResult] = useState<any>(null);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState("");
+  const [showPermission, setShowPermission] = useState(false);
+  const [pendingSource, setPendingSource] = useState<"camera" | "gallery" | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isNative, openCamera, openGallery } = useNativeCamera();
 
-  const handleCapture = () => fileInputRef.current?.click();
+  const t = (te: string, en: string) => lang === "te" ? te : en;
+
+  const scanImage = async (base64: string) => {
+    setImage(base64);
+    setResult(null);
+    setError("");
+    setScanning(true);
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/crop-scan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: base64 }),
+      });
+      if (!resp.ok) throw new Error("Scan failed");
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error);
+      setResult(data);
+    } catch {
+      setError(t("పరీక్ష విఫలమైంది. మళ్ళీ ప్రయత్నించండి.", "Scan failed. Please try again."));
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const handleNativeCapture = async (source: "camera" | "gallery") => {
+    const fn = source === "camera" ? openCamera : openGallery;
+    const base64 = await fn();
+    if (base64) scanImage(base64);
+  };
+
+  const handleCaptureClick = (source: "camera" | "gallery") => {
+    if (isNative) {
+      setPendingSource(source);
+      setShowPermission(true);
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handlePermissionAllow = () => {
+    setShowPermission(false);
+    if (pendingSource) handleNativeCapture(pendingSource);
+  };
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
-    reader.onload = async (ev) => {
+    reader.onload = (ev) => {
       const base64 = ev.target?.result as string;
-      setImage(base64);
-      setResult(null);
-      setError("");
-      setScanning(true);
-
-      try {
-        const resp = await fetch(`${SUPABASE_URL}/functions/v1/crop-scan`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image: base64 }),
-        });
-        if (!resp.ok) throw new Error("Scan failed");
-        const data = await resp.json();
-        if (data.error) throw new Error(data.error);
-        setResult(data);
-      } catch (err) {
-        setError(lang === "te" ? "పరీక్ష విఫలమైంది. మళ్ళీ ప్రయత్నించండి." : "Scan failed. Please try again.");
-      } finally {
-        setScanning(false);
-      }
+      scanImage(base64);
     };
     reader.readAsDataURL(file);
   };
 
-  const t = (te: string, en: string) => lang === "te" ? te : en;
-
   return (
     <section className="px-4 py-6">
-      <button onClick={onBack} className="flex items-center gap-2 text-primary mb-4 font-telugu text-lg active:scale-95 transition-transform">
+      {showPermission && (
+        <PermissionPrompt type="camera" onAllow={handlePermissionAllow} onCancel={() => setShowPermission(false)} />
+      )}
+
+      <button onClick={onBack} className="flex items-center gap-2 text-primary mb-4 font-telugu text-lg active:scale-95 transition-transform min-h-[48px]">
         <ArrowLeft size={24} /> {t("వెనుకకు", "Back")}
       </button>
 
@@ -65,13 +94,25 @@ const DiseaseScanner = ({ onBack }: DiseaseScannerProps) => {
       <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleFile} className="hidden" />
 
       {!image ? (
-        <button onClick={handleCapture} className="w-full flex flex-col items-center justify-center gap-4 bg-card border-4 border-dashed border-primary/30 rounded-2xl p-12 card-hover active:scale-95 transition-transform">
-          <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
-            <Camera size={48} className="text-primary" />
-          </div>
-          <p className="text-xl font-bold font-telugu text-foreground">📷 {t("ఫోటో తీయండి", "Take Photo")}</p>
-          <p className="text-muted-foreground font-telugu">{t("పంట ఆకు ఫోటో తీసి పరీక్షించండి", "Take a photo of the crop leaf to scan")}</p>
-        </button>
+        <div className="space-y-3">
+          <button
+            onClick={() => handleCaptureClick("camera")}
+            className="w-full flex items-center justify-center gap-4 bg-primary text-primary-foreground rounded-2xl p-5 active:scale-95 transition-transform min-h-[64px]"
+          >
+            <Camera size={32} />
+            <span className="text-xl font-bold font-telugu">📷 {t("ఫోటో తీయండి", "Take Photo")}</span>
+          </button>
+
+          <button
+            onClick={() => handleCaptureClick("gallery")}
+            className="w-full flex items-center justify-center gap-4 bg-card border-2 border-border rounded-2xl p-5 active:scale-95 transition-transform min-h-[64px]"
+          >
+            <ImageIcon size={32} className="text-primary" />
+            <span className="text-xl font-bold font-telugu text-foreground">🖼 {t("గ్యాలరీ నుండి ఎంచుకోండి", "Choose from Gallery")}</span>
+          </button>
+
+          <p className="text-center text-muted-foreground font-telugu text-sm">{t("పంట ఆకు ఫోటో తీసి పరీక్షించండి", "Take a photo of the crop leaf to scan")}</p>
+        </div>
       ) : (
         <div className="space-y-4">
           <div className="relative rounded-2xl overflow-hidden border-2 border-border">
@@ -110,7 +151,7 @@ const DiseaseScanner = ({ onBack }: DiseaseScannerProps) => {
             </div>
           )}
 
-          <button onClick={() => { setImage(null); setResult(null); setError(""); }} className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-telugu text-lg font-bold active:scale-95 transition-transform">
+          <button onClick={() => { setImage(null); setResult(null); setError(""); }} className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-telugu text-lg font-bold active:scale-95 transition-transform min-h-[48px]">
             🔄 {t("మరొక ఫోటో తీయండి", "Take Another Photo")}
           </button>
         </div>
