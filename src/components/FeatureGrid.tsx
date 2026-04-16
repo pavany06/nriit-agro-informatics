@@ -1,4 +1,3 @@
-import { CloudSun, Leaf, Mic, IndianRupee, Landmark, Newspaper, Globe, PlayCircle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface FeatureGridProps {
@@ -33,7 +32,7 @@ const FeatureGrid = ({ onSectionClick }: FeatureGridProps) => {
           <button
             key={f.id}
             onClick={() => onSectionClick(f.id)}
-            className={`flex flex-col items-center justify-center gap-1 p-3 rounded-xl border card-hover cursor-pointer min-h-[70px] ${f.color} active:scale-95 transition-transform`}
+            className={`flex flex-col items-center justify-center gap-1 p-3 rounded-xl border cursor-pointer min-h-[80px] ${f.color} active:scale-95 active:opacity-80 transition-all duration-150 select-none`}
           >
             <span className="text-2xl">{f.emoji}</span>
             <span className="text-xs font-bold font-telugu leading-tight text-center">

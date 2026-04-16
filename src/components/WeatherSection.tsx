@@ -3,6 +3,7 @@ import SpeakButton from "./SpeakButton";
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SUPABASE_URL } from "@/lib/supabaseUrl";
+import { useNativeLocation } from "@/hooks/useNativeLocation";
 
 interface WeatherSectionProps {
   onBack: () => void;
@@ -23,33 +24,27 @@ const WeatherSection = ({ onBack }: WeatherSectionProps) => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const { getLocation, error: locError } = useNativeLocation();
 
   useEffect(() => {
-    const fetchWeather = async (lat: number, lon: number) => {
+    const fetchWeather = async () => {
       try {
+        const coords = await getLocation();
         const resp = await fetch(`${SUPABASE_URL}/functions/v1/weather`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ lat, lon }),
+          body: JSON.stringify({ lat: coords.lat, lon: coords.lon }),
         });
         if (!resp.ok) throw new Error("Failed");
         const data = await resp.json();
         setWeather(data);
-      } catch (e) {
+      } catch {
         setError(lang === "te" ? "వాతావరణ సమాచారం లోడ్ కాలేదు" : "Failed to load weather");
       } finally {
         setLoading(false);
       }
     };
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => fetchWeather(pos.coords.latitude, pos.coords.longitude),
-        () => fetchWeather(16.3067, 80.4365) // Default: Guntur
-      );
-    } else {
-      fetchWeather(16.3067, 80.4365);
-    }
+    fetchWeather();
   }, [lang]);
 
   const getAlert = () => {
@@ -70,7 +65,7 @@ const WeatherSection = ({ onBack }: WeatherSectionProps) => {
 
   return (
     <section className="px-4 py-6">
-      <button onClick={onBack} className="flex items-center gap-2 text-primary mb-4 font-telugu text-lg active:scale-95 transition-transform">
+      <button onClick={onBack} className="flex items-center gap-2 text-primary mb-4 font-telugu text-lg active:scale-95 transition-transform min-h-[48px]">
         <ArrowLeft size={24} /> {lang === "te" ? "వెనుకకు" : "Back"}
       </button>
 
@@ -90,9 +85,16 @@ const WeatherSection = ({ onBack }: WeatherSectionProps) => {
         )}
       </div>
 
+      {locError && (
+        <p className="text-sm text-warning-foreground bg-warning/10 p-2 rounded-lg font-telugu mb-3">
+          📍 {lang === "te" ? "మీ లొకేషన్ దొరకలేదు. డిఫాల్ట్ ప్రాంతం చూపిస్తున్నాం." : "Location unavailable. Showing default area."}
+        </p>
+      )}
+
       {loading ? (
-        <div className="flex items-center justify-center h-48">
+        <div className="flex flex-col items-center justify-center h-48 gap-3">
           <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="font-telugu text-muted-foreground">{lang === "te" ? "వాతావరణం లోడ్ అవుతోంది..." : "Loading weather..."}</p>
         </div>
       ) : error ? (
         <p className="text-destructive font-telugu">{error}</p>
