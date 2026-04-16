@@ -31,7 +31,25 @@ const Index = () => {
     }
   });
 
-  const handleBack = () => setActiveSection(null);
+  const handleBack = useCallback(() => setActiveSection(null), []);
+
+  // Handle browser/mobile back button
+  useEffect(() => {
+    if (activeSection) {
+      window.history.pushState({ section: activeSection }, "");
+    }
+  }, [activeSection]);
+
+  useEffect(() => {
+    const onPopState = (e: PopStateEvent) => {
+      if (activeSection) {
+        e.preventDefault();
+        setActiveSection(null);
+      }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [activeSection]);
 
   const renderSection = () => {
     switch (activeSection) {
