@@ -484,10 +484,10 @@ paths:
               schema:
                 type: object
 
-  /azure-tts:
+  /tts:
     post:
       summary: Text-to-speech
-      description: Converts Telugu text to speech audio using Azure TTS.
+      description: Converts text to speech audio using ElevenLabs multilingual v2 model.
       security:
         - ApiKeyAuth: []
       requestBody:
@@ -498,13 +498,19 @@ paths:
               type: object
               required: [text]
               properties:
-                text: { type: string }
-                voice: { type: string, default: te-IN-ShrutiNeural }
+                text: { type: string, maxLength: 1000 }
+                voiceId: { type: string, description: "ElevenLabs voice ID" }
       responses:
         "200":
           description: MP3 audio
           content:
             audio/mpeg: {}
+        "429":
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "500":
           description: Error
           content:
